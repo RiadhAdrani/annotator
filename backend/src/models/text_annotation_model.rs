@@ -32,5 +32,4 @@ pub struct Label {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateTextAnnotationBody {
     pub content: String,
-    pub user_id: String,
 }
