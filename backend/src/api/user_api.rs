@@ -1,12 +1,11 @@
 use crate::{
     controller::user_controller::UserController,
     models::user_model::{UpdateUserBody, User},
-    repository::mongodb_repos::MongoRepo,
 };
-use rocket::{http::Status, serde::json::Json, State};
+use rocket::{http::Status, serde::json::Json};
 
-#[post("/user", data = "<new_user>")]
-pub fn create_user(db: &State<MongoRepo>, new_user: Json<User>) -> Result<Json<User>, Status> {
+#[post("/", data = "<new_user>")]
+pub fn create_user(new_user: Json<User>) -> Result<Json<User>, Status> {
     let data = User {
         id: None,
         email: new_user.email.to_owned(),
@@ -16,7 +15,7 @@ pub fn create_user(db: &State<MongoRepo>, new_user: Json<User>) -> Result<Json<U
         username: new_user.username.to_owned(),
     };
 
-    let user_detail = UserController::create(db, data);
+    let user_detail = UserController::create(data);
 
     match user_detail {
         Ok(user) => {
@@ -30,19 +29,15 @@ pub fn create_user(db: &State<MongoRepo>, new_user: Json<User>) -> Result<Json<U
     }
 }
 
-#[get("/user/<id>")]
-pub fn get_user(id: &str, db: &State<MongoRepo>) -> Result<Json<Option<User>>, Status> {
-    let data = UserController::get(db, id.to_string());
+#[get("/<id>")]
+pub fn get_user(id: &str) -> Result<Json<Option<User>>, Status> {
+    let data = UserController::get(id.to_string());
 
     Ok(Json(data))
 }
 
-#[put("/user/<id>", data = "<_body>")]
-pub fn update_user(
-    id: &str,
-    db: &State<MongoRepo>,
-    _body: Json<UpdateUserBody>,
-) -> Result<Json<Option<User>>, Status> {
+#[put("/<id>", data = "<_body>")]
+pub fn update_user(id: &str, _body: Json<UpdateUserBody>) -> Result<Json<Option<User>>, Status> {
     let body = UpdateUserBody {
         email: _body.email.to_owned(),
         firstname: _body.firstname.to_owned(),
@@ -50,7 +45,7 @@ pub fn update_user(
         password: _body.lastname.to_owned(),
     };
 
-    let data = UserController::update(db, id.to_string(), body);
+    let data = UserController::update(id.to_string(), body);
 
     Ok(Json(data))
 }

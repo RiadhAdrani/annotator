@@ -19,3 +19,23 @@ pub struct UpdateUserBody {
     pub password: Option<String>,
     pub email: Option<String>,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateUserBody {
+    pub firstname: String,
+    pub lastname: String,
+    pub password: String,
+    pub email: String,
+    pub username: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SignInBody {
+    pub login: String,
+    pub password: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UserAuthResponse {
+    pub token: String,
+}

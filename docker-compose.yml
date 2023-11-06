@@ -6,6 +6,20 @@ services:
     image: mongo:latest # Use the official MongoDB Docker image
     ports:
       - '27017:27017'
+
+  cache:
+    stop_grace_period: 1s
+    container_name: redis
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - 'annotator_cache:/data'
+    expose:
+      - 6379
+    command: ['redis-server', '--loglevel', 'warning']
+    ports:
+      - '6379:6379'
+
   api:
     container_name: api
     network_mode: host
@@ -16,6 +30,7 @@ services:
       - ./.env
     depends_on:
       - db
+      - cache
     working_dir: /app
     volumes:
       - ./backend:/app
@@ -41,3 +56,6 @@ services:
       - 3000
     ports:
       - '3000:3000'
+
+volumes:
+  annotator_cache:

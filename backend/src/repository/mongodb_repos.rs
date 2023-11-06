@@ -10,6 +10,10 @@ pub struct MongoRepo {
     pub text_annotation_collection: Collection<TextAnnotation>,
 }
 
+lazy_static! {
+    pub static ref DB: MongoRepo = MongoRepo::init();
+}
+
 impl MongoRepo {
     pub fn init() -> Self {
         dotenv().ok();

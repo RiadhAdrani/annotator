@@ -1,16 +1,16 @@
 use crate::models::user_model::{UpdateUserBody, User};
-use crate::repository::mongodb_repos::MongoRepo;
+use crate::repository::mongodb_repos::DB;
+
 use mongodb::options::{FindOneAndUpdateOptions, UpdateModifications};
 use mongodb::{
     bson::{doc, extjson::de::Error, oid::ObjectId},
     options::FindOneOptions,
 };
-use rocket::State;
 
 pub struct UserController {}
 
 impl UserController {
-    pub fn create(db: &State<MongoRepo>, body: User) -> Result<Option<User>, Error> {
+    pub fn create(body: User) -> Result<Option<User>, Error> {
         let new_doc = User {
             id: None,
             email: body.email,
@@ -20,25 +20,25 @@ impl UserController {
             username: body.username,
         };
 
-        let result = db
+        let result = DB
             .user_collection
             .insert_one(new_doc, None)
             .ok()
             .expect("Error creating user");
 
-        let user = db
+        let user = DB
             .user_collection
             .find_one(doc! {"_id":result.inserted_id}, None);
 
         Ok(user.unwrap())
     }
 
-    pub fn get(db: &State<MongoRepo>, id: String) -> Option<User> {
+    pub fn get(id: String) -> Option<User> {
         let parsed = ObjectId::parse_str(id);
 
         match parsed {
             Ok(_id) => {
-                let result = db
+                let result = DB
                     .user_collection
                     .find_one(doc! {"_id":_id}, FindOneOptions::default());
 
@@ -48,7 +48,9 @@ impl UserController {
         }
     }
 
-    pub fn update(db: &State<MongoRepo>, id: String, body: UpdateUserBody) -> Option<User> {
+    // pub fn get_me(db: &State<MongoRepo>, id)
+
+    pub fn update(id: String, body: UpdateUserBody) -> Option<User> {
         // find user
         let v = ObjectId::parse_str(id);
 
@@ -78,7 +80,7 @@ impl UserController {
             update.insert("email", body.email.unwrap());
         }
 
-        let result = db.user_collection.find_one_and_update(
+        let result = DB.user_collection.find_one_and_update(
             doc! {"_id":_id},
             UpdateModifications::Document(doc! {"$set": update}),
             FindOneAndUpdateOptions::builder()

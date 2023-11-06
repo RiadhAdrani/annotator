@@ -33,3 +33,15 @@ pub struct Label {
 pub struct CreateTextAnnotationBody {
     pub content: String,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateLabelBody {
+    pub content: String,
+    pub color: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateLabelBody {
+    pub content: Option<String>,
+    pub color: Option<String>,
+}
