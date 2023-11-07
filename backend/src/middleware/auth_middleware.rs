@@ -11,6 +11,7 @@ use request::Outcome;
 use crate::{
     error::response::RequestError,
     helpers::token_helpers::get_token_claims,
+    models::user_model::User,
     repository::{mongodb_repos::DB, redis_repos::CACHE_DB},
 };
 
@@ -18,6 +19,7 @@ use mongodb::bson::{doc, oid::ObjectId};
 
 pub struct AuthContext {
     pub user_id: String,
+    pub user: User,
 }
 
 #[rocket::async_trait]
@@ -92,7 +94,14 @@ impl<'r> FromRequest<'r> for AuthContext {
             ));
         }
 
-        let user_id = user.unwrap().unwrap().id.unwrap().to_string();
+        let user_id = user
+            .as_ref()
+            .unwrap()
+            .as_ref()
+            .unwrap()
+            .id
+            .unwrap()
+            .to_string();
 
         let exp = CACHE_DB
             .client
@@ -110,6 +119,7 @@ impl<'r> FromRequest<'r> for AuthContext {
         // construct an AuthContext or return an error
         let auth_context = AuthContext {
             user_id, // Replace with the actual user ID
+            user: user.unwrap().unwrap(),
         };
 
         Outcome::Success(auth_context)
