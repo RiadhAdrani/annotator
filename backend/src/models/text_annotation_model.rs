@@ -36,12 +36,12 @@ pub struct CreateTextAnnotationBody {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateLabelBody {
-    pub content: String,
+    pub name: String,
     pub color: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateLabelBody {
-    pub content: Option<String>,
+    pub name: Option<String>,
     pub color: Option<String>,
 }
