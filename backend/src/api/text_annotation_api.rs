@@ -5,7 +5,8 @@ use crate::{
     models::{
         common_models::DefaultResponse,
         text_annotation_model::{
-            CreateLabelBody, CreateTextAnnotationBody, TextAnnotation, UpdateLabelBody,
+            CreateLabelBody, CreateTextAnnotationBody, CreateTokenBody, TextAnnotation,
+            UpdateLabelBody,
         },
     },
 };
@@ -114,6 +115,39 @@ pub fn delete_text_annotation_label(
 ) -> Result<Json<TextAnnotation>, Json<RequestError>> {
     let response =
         TextAnnotationController::delete_label(auth, id.to_string(), label_id.to_string());
+
+    if response.is_err() {
+        return Err(Json(response.err().unwrap()));
+    }
+
+    Ok(Json(response.unwrap()))
+}
+
+#[post("/<id>/tokens", data = "<body>")]
+pub fn create_text_annotation_token(
+    auth: AuthContext,
+    id: &str,
+    body: Json<CreateTokenBody>,
+) -> Result<Json<TextAnnotation>, Json<RequestError>> {
+    println!("{:?}", body);
+
+    let response = TextAnnotationController::create_token(auth, id.to_string(), body);
+
+    if response.is_err() {
+        return Err(Json(response.err().unwrap()));
+    }
+
+    Ok(Json(response.unwrap()))
+}
+
+#[delete("/<id>/tokens/<token_id>")]
+pub fn delete_text_annotation_token(
+    auth: AuthContext,
+    id: &str,
+    token_id: &str,
+) -> Result<Json<TextAnnotation>, Json<RequestError>> {
+    let response =
+        TextAnnotationController::delete_token(auth, id.to_string(), token_id.to_string());
 
     if response.is_err() {
         return Err(Json(response.err().unwrap()));

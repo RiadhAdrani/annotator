@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use mongodb::{
     bson::{doc, oid::ObjectId},
-    options::FindOptions,
+    options::{FindOneAndUpdateOptions, FindOptions, ReturnDocument},
 };
 use rocket::{http::Status, serde::json::Json};
 
@@ -12,7 +12,8 @@ use crate::{
     models::{
         common_models::DefaultResponse,
         text_annotation_model::{
-            CreateLabelBody, CreateTextAnnotationBody, Label, TextAnnotation, UpdateLabelBody,
+            CreateLabelBody, CreateTextAnnotationBody, CreateTokenBody, Label, TextAnnotation,
+            UpdateLabelBody,
         },
     },
     repository::mongodb_repos::DB,
@@ -250,7 +251,9 @@ impl TextAnnotationController {
                 "_id": label.id,
               }
             }},
-            None,
+            FindOneAndUpdateOptions::builder()
+                .return_document(ReturnDocument::After)
+                .build(),
         );
 
         if creation_result.as_ref().is_err() || creation_result.as_ref().unwrap().is_none() {
@@ -367,7 +370,9 @@ impl TextAnnotationController {
               "_id":annotation_oid.as_ref().unwrap(),"labels._id": label_oid.unwrap()
             },
             doc! {"$set":update_doc},
-            None,
+            FindOneAndUpdateOptions::builder()
+                .return_document(ReturnDocument::After)
+                .build(),
         );
 
         if update_result.as_ref().is_err() || update_result.as_ref().unwrap().is_none() {
@@ -447,11 +452,16 @@ impl TextAnnotationController {
             doc! {
               "$pull":{
                 "labels": {
-                  "_id":{ "$in": [label_oid.unwrap()]  }
+                  "_id":{ "$in": [ label_oid.clone().unwrap() ] }
+                },
+                "tokens": {
+                  "label":{ "$in":[ label_oid.clone().unwrap() ] }
                 }
               }
             },
-            None,
+            FindOneAndUpdateOptions::builder()
+                .return_document(ReturnDocument::After)
+                .build(),
         );
 
         if update_result.as_ref().is_err() || update_result.as_ref().unwrap().is_none() {
@@ -459,6 +469,220 @@ impl TextAnnotationController {
                 Status::InternalServerError,
                 Some(update_result.err().unwrap().to_string()),
                 // Some("Unable to update label".to_string()),
+            ));
+        }
+
+        let updated_annotation = update_result.unwrap().unwrap();
+
+        Ok(updated_annotation)
+    }
+
+    pub fn create_token(
+        auth: AuthContext,
+        annotation_id: String,
+        body: Json<CreateTokenBody>,
+    ) -> Result<TextAnnotation, RequestError> {
+        let object_id = ObjectId::from_str(annotation_id.as_str());
+
+        if object_id.is_err() {
+            return Err(RequestError::new(
+                Status::NotFound,
+                Some("Unable to convert annotation id to object id".to_string()),
+            ));
+        }
+
+        // find annotation
+        let annotation_result = DB
+            .text_annotation_collection
+            .find_one(doc! {"_id": object_id.as_ref().unwrap()}, None);
+
+        if annotation_result.as_ref().is_err() || annotation_result.as_ref().unwrap().is_none() {
+            return Err(RequestError::new(
+                Status::NotFound,
+                Some("Text annotation not found".to_string()),
+            ));
+        }
+
+        let annotation = annotation_result.unwrap().unwrap();
+
+        // check if owned by user
+        if annotation.user_id != auth.user.id.unwrap() {
+            return Err(RequestError::new(
+                Status::NotFound,
+                Some("Text annotation not found : Unauthorized".to_string()),
+            ));
+        };
+
+        // find label
+        let label_oid = ObjectId::from_str(body.label.as_str());
+
+        if label_oid.is_err() {
+            return Err(RequestError::new(
+                Status::BadRequest,
+                Some("Unable to convert label id to object id".to_string()),
+            ));
+        }
+
+        let existing_label = annotation.labels.iter().find(|l| {
+            let o1 = l.to_owned().id.unwrap();
+
+            return o1 == label_oid.clone().unwrap();
+        });
+
+        if existing_label.is_none() {
+            return Err(RequestError::new(
+                Status::NotFound,
+                Some("Label not found".to_string()),
+            ));
+        }
+
+        let start = body.start.to_owned();
+        let end = body.end.to_owned();
+
+        // check start > end
+        if end <= start {
+            return Err(RequestError::new(
+                Status::BadRequest,
+                Some("Token (start) is superior/equal to (end)".to_string()),
+            ));
+        }
+
+        if start.is_negative() {
+            return Err(RequestError::new(
+                Status::BadRequest,
+                Some("Token (start) is negative".to_string()),
+            ));
+        }
+
+        if end >= (annotation.content.len() as i64) {
+            return Err(RequestError::new(
+                Status::BadRequest,
+                Some("Token (end) is superior to the content length".to_string()),
+            ));
+        }
+
+        // check if some tokens are interlacing with this one
+        let interlacing_tokens = annotation.tokens.iter().filter(|token| {
+            return (start <= token.start && token.start <= end)
+                || (start <= token.end && token.end <= end);
+        });
+
+        if interlacing_tokens.count() != 0 {
+            return Err(RequestError::new(
+                Status::Conflict,
+                Some("Token is interlacing with existing one(s)".to_string()),
+            ));
+        }
+
+        let doc = doc! {
+          "_id": ObjectId::new(),
+          "start": start,
+          "end": end,
+          "label": label_oid.clone().unwrap()
+        };
+
+        // create token
+        // create label
+        let creation_result = DB.text_annotation_collection.find_one_and_update(
+            doc! {"_id": object_id.as_ref().unwrap()},
+            doc! {"$push": {
+              "tokens": doc
+            }},
+            FindOneAndUpdateOptions::builder()
+                .return_document(ReturnDocument::After)
+                .build(),
+        );
+
+        if creation_result.as_ref().is_err() || creation_result.as_ref().unwrap().is_none() {
+            return Err(RequestError::new(
+                Status::InternalServerError,
+                Some("Unable to create a new Label".to_string()),
+            ));
+        }
+
+        let updated_annotation = creation_result.unwrap().unwrap();
+
+        Ok(updated_annotation)
+    }
+
+    pub fn delete_token(
+        auth: AuthContext,
+        annotation_id: String,
+        token_id: String,
+    ) -> Result<TextAnnotation, RequestError> {
+        let annotation_oid = ObjectId::from_str(annotation_id.as_str());
+
+        if annotation_oid.is_err() {
+            return Err(RequestError::new(
+                Status::NotFound,
+                Some("Unable to convert annotation id to object id".to_string()),
+            ));
+        }
+
+        let token_oid = ObjectId::from_str(token_id.as_str());
+
+        if token_oid.is_err() {
+            return Err(RequestError::new(
+                Status::NotFound,
+                Some("Unable to convert token id to object id".to_string()),
+            ));
+        }
+        // find annotation
+        let annotation_result = DB
+            .text_annotation_collection
+            .find_one(doc! {"_id": annotation_oid.as_ref().unwrap()}, None);
+
+        if annotation_result.as_ref().is_err() || annotation_result.as_ref().unwrap().is_none() {
+            return Err(RequestError::new(
+                Status::NotFound,
+                Some("Text annotation not found".to_string()),
+            ));
+        }
+
+        let annotation = annotation_result.unwrap().unwrap();
+
+        // check if owned by user
+        if annotation.user_id != auth.user.id.unwrap() {
+            return Err(RequestError::new(
+                Status::NotFound,
+                Some("Text annotation not found : Unauthorized".to_string()),
+            ));
+        };
+
+        // find token
+        let token = annotation
+            .tokens
+            .iter()
+            .find(|t| t.id.clone().unwrap() == token_oid.clone().unwrap());
+
+        if token.is_none() {
+            return Err(RequestError::new(
+                Status::NotFound,
+                Some("Token not found".to_string()),
+            ));
+        }
+
+        // delete label
+        let update_result = DB.text_annotation_collection.find_one_and_update(
+            doc! {
+              "_id":annotation_oid.as_ref().unwrap()
+            },
+            doc! {
+              "$pull":{
+                "tokens": {
+                  "_id":{ "$in": [token_oid.unwrap()]  }
+                }
+              }
+            },
+            FindOneAndUpdateOptions::builder()
+                .return_document(ReturnDocument::After)
+                .build(),
+        );
+
+        if update_result.as_ref().is_err() || update_result.as_ref().unwrap().is_none() {
+            return Err(RequestError::new(
+                Status::InternalServerError,
+                Some(update_result.err().unwrap().to_string()),
             ));
         }
 

@@ -15,8 +15,8 @@ pub struct TextAnnotation {
 pub struct Token {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>,
-    pub start: i128,
-    pub end: i128,
+    pub start: i64,
+    pub end: i64,
     /// reference a label in the labels array
     pub label: ObjectId,
 }
@@ -44,4 +44,11 @@ pub struct CreateLabelBody {
 pub struct UpdateLabelBody {
     pub name: Option<String>,
     pub color: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateTokenBody {
+    pub start: i64,
+    pub end: i64,
+    pub label: String,
 }

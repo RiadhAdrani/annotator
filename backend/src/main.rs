@@ -15,9 +15,9 @@ extern crate lazy_static;
 use api::{
     auth_api::{sign_in, sign_up},
     text_annotation_api::{
-        create_text_annotation, create_text_annotation_label, delete_text_annotation,
-        delete_text_annotation_label, get_text_annotation, get_text_annotations,
-        update_text_annotation_label,
+        create_text_annotation, create_text_annotation_label, create_text_annotation_token,
+        delete_text_annotation, delete_text_annotation_label, delete_text_annotation_token,
+        get_text_annotation, get_text_annotations, update_text_annotation_label,
     },
     user_api::{create_user, get_user, update_user},
 };
@@ -34,9 +34,13 @@ fn rocket() -> _ {
                 delete_text_annotation,
                 get_text_annotation,
                 get_text_annotations,
+                // labels
                 create_text_annotation_label,
                 update_text_annotation_label,
-                delete_text_annotation_label
+                delete_text_annotation_label,
+                // tokens
+                create_text_annotation_token,
+                delete_text_annotation_token
             ],
         )
 }
