@@ -8,6 +8,7 @@ use rocket::{http::Status, serde::json::Json};
 
 use crate::{
     error::response::RequestError,
+    helpers::colors_helpers::{get_next_valid_color, is_color_used, is_valid_color},
     middleware::auth_middleware::AuthContext,
     models::{
         common_models::DefaultResponse,
@@ -204,16 +205,58 @@ impl TextAnnotationController {
             ));
         }
 
+        // check if we can add label
+        let generated_color = get_next_valid_color(&annotation.labels);
+
+        if generated_color.is_err() {
+            return Err(RequestError::new(
+                Status::NotFound,
+                Some("Maximum number of labels reached".to_string()),
+            ));
+        }
+
         let mut label = Label {
             name: body.name.clone().to_owned(),
-            color: "#000000".to_string(),
+            color: "".to_string(),
             id: Some(ObjectId::new()),
         };
 
-        // TODO: generate new color or take the value if existing
+        let mut color: Option<String> = None;
+
         if body.color.is_some() {
-            label.color = body.color.clone().unwrap();
+            // check it
+            let is_valid = is_valid_color(body.color.clone().unwrap());
+
+            if !is_valid {
+                return Err(RequestError::new(
+                    Status::Conflict,
+                    Some("Invalid color name".to_string()),
+                ));
+            }
+
+            let is_used = is_color_used(body.color.clone().unwrap(), &annotation.labels);
+
+            if is_used {
+                return Err(RequestError::new(
+                    Status::Conflict,
+                    Some("Label color is already used".to_string()),
+                ));
+            }
+
+            color = Some(body.color.clone().unwrap());
+        } else {
+            // generate
+            color = Some(generated_color.unwrap());
+        };
+
+        if color.is_none() {
+            return Err(RequestError::new(
+                Status::Conflict,
+                Some("Invalid color name".to_string()),
+            ));
         }
+
+        label.color = color.unwrap();
 
         // check if label exist with same text or color
         let name_exist = annotation
@@ -225,19 +268,6 @@ impl TextAnnotationController {
             return Err(RequestError::new(
                 Status::Conflict,
                 Some("Another label with the same name exists".to_string()),
-            ));
-        }
-
-        // check if label exist with same text or color
-        let color_exist = annotation
-            .labels
-            .iter()
-            .find(|item| item.color == label.color);
-
-        if color_exist.is_some() {
-            return Err(RequestError::new(
-                Status::Conflict,
-                Some("Another label with the same color exists".to_string()),
             ));
         }
 
@@ -347,13 +377,19 @@ impl TextAnnotationController {
         }
 
         if body.color.is_some() {
-            // check if color already exists
-            let name_exist = annotation
-                .labels
-                .iter()
-                .find(|item| item.color == body.color.clone().unwrap());
+            let color_valid = is_valid_color(body.color.clone().unwrap());
 
-            if name_exist.is_some() {
+            if !color_valid {
+                return Err(RequestError::new(
+                    Status::Conflict,
+                    Some("Invalid color name".to_string()),
+                ));
+            }
+
+            // check if color already exists
+            let color_used = is_color_used(body.color.clone().unwrap(), &annotation.labels);
+
+            if color_used {
                 return Err(RequestError::new(
                     Status::Conflict,
                     Some("Another label with the same color exists".to_string()),
