@@ -1,66 +1,68 @@
+use crate::error::response::RequestError;
 use crate::models::user_model::{UpdateUserBody, User};
 use crate::repository::mongodb_repos::DB;
 
 use mongodb::options::{FindOneAndUpdateOptions, UpdateModifications};
 use mongodb::{
-    bson::{doc, extjson::de::Error, oid::ObjectId},
+    bson::{doc, oid::ObjectId},
     options::FindOneOptions,
 };
+use rocket::http::Status;
 
 pub struct UserController {}
 
 impl UserController {
-    pub fn create(body: User) -> Result<Option<User>, Error> {
-        let new_doc = User {
-            id: None,
-            email: body.email,
-            firstname: body.firstname,
-            lastname: body.lastname,
-            password: body.password,
-            username: body.username,
-        };
+    // ? create is handled by auth
+
+    pub fn get(id: String) -> Result<User, RequestError> {
+        let id_result = ObjectId::parse_str(id);
+
+        if id_result.is_err() {
+            return Err(RequestError::new(
+                Status::InternalServerError,
+                Some("Unable to convert user id to object id".to_string()),
+            ));
+        }
+
+        let id = id_result.unwrap();
 
         let result = DB
             .user_collection
-            .insert_one(new_doc, None)
-            .ok()
-            .expect("Error creating user");
+            .find_one(doc! {"_id":id}, FindOneOptions::default());
 
-        let user = DB
-            .user_collection
-            .find_one(doc! {"_id":result.inserted_id}, None);
-
-        Ok(user.unwrap())
-    }
-
-    pub fn get(id: String) -> Option<User> {
-        let parsed = ObjectId::parse_str(id);
-
-        match parsed {
-            Ok(_id) => {
-                let result = DB
-                    .user_collection
-                    .find_one(doc! {"_id":_id}, FindOneOptions::default());
-
-                result.unwrap()
-            }
-            Err(_) => None,
+        if result.as_ref().is_err() || result.as_ref().unwrap().is_none() {
+            return Err(RequestError::new(
+                Status::NotFound,
+                Some("User not found".to_string()),
+            ));
         }
+
+        Ok(result.unwrap().unwrap())
     }
 
     // pub fn get_me(db: &State<MongoRepo>, id)
 
-    pub fn update(id: String, body: UpdateUserBody) -> Option<User> {
+    pub fn update(id: String, body: UpdateUserBody) -> Result<User, RequestError> {
         // find user
-        let v = ObjectId::parse_str(id);
+        let v = ObjectId::parse_str(id.as_str());
 
         if v.is_err() {
-            return None;
+            return Err(RequestError::new(
+                Status::InternalServerError,
+                Some("Unable to convert user id to object id".to_string()),
+            ));
         }
 
         let _id = v.unwrap();
 
-        // TODO: check if document exist
+        let user = DB.user_collection.find_one(doc! {"_id": _id}, None);
+
+        if user.is_err() || user.unwrap().is_none() {
+            return Err(RequestError::new(
+                Status::NotFound,
+                Some("User does not exist".to_string()),
+            ));
+        }
 
         let mut update = doc! {};
 
@@ -76,9 +78,6 @@ impl UserController {
         if body.password.is_some() {
             update.insert("password", body.password.unwrap());
         }
-        if body.email.is_some() {
-            update.insert("email", body.email.unwrap());
-        }
 
         let result = DB.user_collection.find_one_and_update(
             doc! {"_id":_id},
@@ -88,10 +87,13 @@ impl UserController {
                 .build(),
         );
 
-        if result.is_err() {
-            return None;
+        if result.as_ref().is_err() || result.as_ref().unwrap().is_none() {
+            return Err(RequestError::new(
+                Status::InternalServerError,
+                Some("Unable to update user".to_string()),
+            ));
         }
 
-        result.unwrap()
+        Ok(result.unwrap().unwrap())
     }
 }

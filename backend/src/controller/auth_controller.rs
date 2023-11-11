@@ -36,6 +36,30 @@ impl AuthController {
             username: body.username.to_owned(),
         };
 
+        // check if email is used
+        let user_with_email = DB
+            .user_collection
+            .find_one(doc! {"email": body.email.to_owned()}, None);
+
+        if user_with_email.is_ok() && user_with_email.unwrap().is_some() {
+            return Err(RequestError::new(
+                Status::Conflict,
+                Some("Email already used".to_string()),
+            ));
+        }
+
+        // check username
+        let user_with_username = DB
+            .user_collection
+            .find_one(doc! {"username": body.username.to_owned()}, None);
+
+        if user_with_username.is_ok() && user_with_username.unwrap().is_some() {
+            return Err(RequestError::new(
+                Status::Conflict,
+                Some("Username already exist".to_string()),
+            ));
+        }
+
         // create user
         let result = DB.user_collection.insert_one(doc, None);
 

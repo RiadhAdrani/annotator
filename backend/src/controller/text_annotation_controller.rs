@@ -221,7 +221,7 @@ impl TextAnnotationController {
             id: Some(ObjectId::new()),
         };
 
-        let mut color: Option<String> = None;
+        let mut _color: Option<String> = None;
 
         if body.color.is_some() {
             // check it
@@ -243,20 +243,20 @@ impl TextAnnotationController {
                 ));
             }
 
-            color = Some(body.color.clone().unwrap());
+            _color = Some(body.color.clone().unwrap());
         } else {
             // generate
-            color = Some(generated_color.unwrap());
+            _color = Some(generated_color.unwrap());
         };
 
-        if color.is_none() {
+        if _color.is_none() {
             return Err(RequestError::new(
                 Status::Conflict,
                 Some("Invalid color name".to_string()),
             ));
         }
 
-        label.color = color.unwrap();
+        label.color = _color.unwrap();
 
         // check if label exist with same text or color
         let name_exist = annotation

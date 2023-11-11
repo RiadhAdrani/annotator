@@ -17,7 +17,6 @@ pub struct UpdateUserBody {
     pub firstname: Option<String>,
     pub lastname: Option<String>,
     pub password: Option<String>,
-    pub email: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

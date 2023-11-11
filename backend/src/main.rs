@@ -19,14 +19,14 @@ use api::{
         delete_text_annotation, delete_text_annotation_label, delete_text_annotation_token,
         get_text_annotation, get_text_annotations, update_text_annotation_label,
     },
-    user_api::{create_user, get_user, update_user},
+    user_api::{get_user, update_user},
 };
 
 #[launch]
 fn rocket() -> _ {
     rocket::build()
         .mount("/", routes![sign_in, sign_up])
-        .mount("/user", routes![create_user, get_user, update_user])
+        .mount("/user", routes![get_user, update_user])
         .mount(
             "/annotations/text",
             routes![
