@@ -14,6 +14,7 @@ extern crate lazy_static;
 
 use api::{
     auth_api::{sign_in, sign_up},
+    public_api::get_data,
     text_annotation_api::{
         create_text_annotation, create_text_annotation_label, create_text_annotation_token,
         delete_text_annotation, delete_text_annotation_label, delete_text_annotation_token,
@@ -25,8 +26,11 @@ use api::{
 #[launch]
 fn rocket() -> _ {
     rocket::build()
-        .mount("/", routes![sign_in, sign_up])
+        // public routes
+        .mount("/", routes![sign_in, sign_up, get_data])
+        // users
         .mount("/user", routes![get_user, update_user])
+        // text annotations
         .mount(
             "/annotations/text",
             routes![
