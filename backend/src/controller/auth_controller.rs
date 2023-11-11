@@ -3,7 +3,11 @@ use rocket::{http::Status, serde::json::Json};
 
 use crate::{
     error::response::RequestError,
-    helpers::{date_helpers::create_datetime_with_days_offset, token_helpers::create_token_string},
+    helpers::{
+        date_helpers::create_datetime_with_days_offset,
+        password_helpers::{hash_password, verify_password},
+        token_helpers::create_token_string,
+    },
     models::user_model::{CreateUserBody, SignInBody, User, UserAuthResponse},
     repository::{mongodb_repos::DB, redis_repos::CACHE_DB},
 };
@@ -13,15 +17,22 @@ pub struct AuthController;
 
 impl AuthController {
     pub fn sign_up(body: Json<CreateUserBody>) -> Result<UserAuthResponse, RequestError> {
+        let hashed_password = hash_password(body.password.to_owned());
+
+        if hashed_password.is_err() {
+            return Err(RequestError::new(
+                Status::BadRequest,
+                Some("Unable to create user".to_string()),
+            ));
+        }
+
         // create doc struct
         let doc = User {
             id: None,
             email: body.email.to_owned(),
             firstname: body.firstname.to_owned(),
             lastname: body.lastname.to_owned(),
-
-            // TODO: password need to be encrypted
-            password: body.password.to_owned(),
+            password: hashed_password.unwrap(),
             username: body.username.to_owned(),
         };
 
@@ -113,8 +124,7 @@ impl AuthController {
         let user = user_result.unwrap().unwrap();
 
         // check if password match
-        // TODO: need to be decoded before (after adding encryption above)
-        if user.password != password {
+        if !verify_password(password.clone(), user.password.clone()) {
             return Err(RequestError::new(
                 Status::BadRequest,
                 Some(format!("wrong password : {} vs {}", user.password, password).to_string()),
