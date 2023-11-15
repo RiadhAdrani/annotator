@@ -3,7 +3,7 @@ version: '3.8'
 services:
   db:
     container_name: mongodb
-    image: mongo:latest # Use the official MongoDB Docker image
+    image: mongo:latest
     ports:
       - '27017:27017'
 
@@ -22,7 +22,7 @@ services:
 
   api:
     container_name: api
-    network_mode: host
+    network_mode: 'host'
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -36,9 +36,9 @@ services:
       - ./backend:/app
     command: sh -c "cargo watch -x run"
     expose:
-      - 8000
+      - 8080
     ports:
-      - '8000:8000'
+      - '8080:8080'
 
   app:
     container_name: webapp

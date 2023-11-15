@@ -1,8 +1,9 @@
-use std::env;
 extern crate dotenv;
-use dotenv::dotenv;
 
-use crate::models::{text_annotation_model::TextAnnotation, user_model::User};
+use crate::{
+    config::env::MONGO_URL,
+    models::{text_annotation_model::TextAnnotation, user_model::User},
+};
 use mongodb::sync::{Client, Collection};
 
 pub struct MongoRepo {
@@ -16,15 +17,8 @@ lazy_static! {
 
 impl MongoRepo {
     pub fn init() -> Self {
-        dotenv().ok();
-
-        let uri = match env::var("MONGO_URL") {
-            Ok(v) => v.to_string(),
-            Err(_) => format!("Error loading env variable"),
-        };
-
         // connecting to mongodb
-        let client = Client::with_uri_str(uri).unwrap();
+        let client = Client::with_uri_str(MONGO_URL.clone()).unwrap();
 
         // creating a database
         let db = client.database("annotator");

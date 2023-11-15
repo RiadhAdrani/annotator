@@ -7,6 +7,8 @@ use rocket::serde::json::Json;
 
 #[post("/sign-up", data = "<body>")]
 pub fn sign_up(body: Json<CreateUserBody>) -> Result<Json<UserAuthResponse>, Json<RequestError>> {
+    println!("sign up");
+
     let result = AuthController::sign_up(body);
 
     if result.is_err() {

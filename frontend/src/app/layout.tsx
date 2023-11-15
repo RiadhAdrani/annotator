@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import '@mantine/core/styles.css';
 import { MantineProvider } from '@mantine/core';
+import { AppContextProvider } from '@/context/app.context';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -15,7 +16,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={inter.className}>
-        <MantineProvider>{children}</MantineProvider>
+        <AppContextProvider>
+          <MantineProvider>{children}</MantineProvider>
+        </AppContextProvider>
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
-use std::env;
 extern crate dotenv;
-use dotenv::dotenv;
+
+use crate::config::env::REDIS_URL;
 
 extern crate redis;
 
@@ -9,14 +9,7 @@ lazy_static! {
 }
 
 pub fn create_redis_connection() -> redis::Client {
-    dotenv().ok();
-
-    let uri = match env::var("REDIS_URL") {
-        Ok(v) => v.to_string(),
-        Err(_) => format!("Error loading env variable"),
-    };
-
-    let client = redis::Client::open(uri);
+    let client = redis::Client::open(REDIS_URL.to_string());
 
     return client.ok().unwrap();
 }

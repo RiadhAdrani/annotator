@@ -1,50 +1,42 @@
-mod api;
-mod controller;
-mod error;
-mod helpers;
-mod middleware;
-mod models;
-mod repository;
+use actix_cors::Cors;
+use actix_web::{get, http, post, web, App, HttpResponse, HttpServer, Responder};
 
-#[macro_use]
-extern crate rocket;
+#[get("/")]
+async fn hello() -> impl Responder {
+    println!("From hello world");
 
-#[macro_use]
-extern crate lazy_static;
+    HttpResponse::Ok().body("Hello world!")
+}
 
-use api::{
-    auth_api::{sign_in, sign_up},
-    public_api::get_data,
-    text_annotation_api::{
-        create_text_annotation, create_text_annotation_label, create_text_annotation_token,
-        delete_text_annotation, delete_text_annotation_label, delete_text_annotation_token,
-        get_text_annotation, get_text_annotations, update_text_annotation_label,
-    },
-    user_api::{get_user, update_user},
-};
+#[post("/echo")]
+async fn echo(req_body: String) -> impl Responder {
+    HttpResponse::Ok().body(req_body)
+}
 
-#[launch]
-fn rocket() -> _ {
-    rocket::build()
-        // public routes
-        .mount("/", routes![sign_in, sign_up, get_data])
-        // users
-        .mount("/user", routes![get_user, update_user])
-        // text annotations
-        .mount(
-            "/annotations/text",
-            routes![
-                create_text_annotation,
-                delete_text_annotation,
-                get_text_annotation,
-                get_text_annotations,
-                // labels
-                create_text_annotation_label,
-                update_text_annotation_label,
-                delete_text_annotation_label,
-                // tokens
-                create_text_annotation_token,
-                delete_text_annotation_token
-            ],
-        )
+async fn manual_hello() -> impl Responder {
+    HttpResponse::Ok().body("Hey there!")
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| {
+        let cors = Cors::default()
+            // TODO: replace with env var
+            .allowed_origin("http://localhost:3000")
+            .allowed_methods(vec!["GET", "POST", "PUT", "PATCH", "OPTIONS"])
+            .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
+            .allowed_header(http::header::CONTENT_TYPE)
+            .allowed_header(http::header::ACCESS_CONTROL_ALLOW_HEADERS)
+            .allowed_header(http::header::ACCESS_CONTROL_ALLOW_ORIGIN)
+            .max_age(3600);
+
+        App::new()
+            .wrap(cors)
+            .service(hello)
+            .service(echo)
+            .route("/hey", web::get().to(manual_hello))
+    })
+    .bind(("127.0.0.1", 8080))?
+    .run()
+    .await
 }

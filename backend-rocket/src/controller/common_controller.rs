@@ -13,4 +13,6 @@ impl CommonController {
 
         Ok(response)
     }
+
+    pub fn options
 }
