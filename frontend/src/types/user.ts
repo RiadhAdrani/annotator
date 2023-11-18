@@ -1,21 +1,23 @@
-export interface ObjectId {
-  $oid: string;
-}
+import { Base } from './base';
 
-export interface User {
-  id: ObjectId;
+export interface User extends Base {
   firstname: string;
   lastname: string;
   email: string;
   username: string;
+}
+
+export interface CreateUserBody extends Omit<User, 'id'> {
   password: string;
 }
 
-export type UpdateUserBody = Partial<Pick<User, 'firstname' | 'lastname' | 'password'>>;
-
-export type SignUpBody = Pick<User, 'firstname' | 'email' | 'password' | 'lastname' | 'username'>;
+export type UpdateUserBody = Partial<Pick<User, 'firstname' | 'lastname' | 'username'>>;
 
 export interface SignInBody {
   login: string;
   password: string;
+}
+
+export interface UserAuthResponse {
+  token: string;
 }

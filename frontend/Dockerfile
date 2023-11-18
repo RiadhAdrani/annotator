@@ -10,7 +10,7 @@ COPY package.json ./
 COPY . .
 
 # Expose the default React development port (usually 3000)
-EXPOSE 3000
+EXPOSE 5173
 
 # Start the React development server
 CMD ["yarn", "dev"]

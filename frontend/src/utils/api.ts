@@ -2,7 +2,7 @@ import axios from 'axios';
 import cookies from 'js-cookie';
 
 // const baseURL = process.env.API_URL;
-const baseURL = 'http://localhost:8080';
+const baseURL = import.meta.env.API_URL;
 
 const $api = axios.create({
   baseURL,
