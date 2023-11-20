@@ -8,3 +8,21 @@ edition = "2021"
 [dependencies]
 actix-cors = "0.6.4"
 actix-web = "4"
+dotenv = "0.15.0"
+lazy_static = "1.4.0"
+chrono = "0.4.31"
+pwhash = "1.0.0"
+jsonwebtoken = "9.1.0"
+serde = "1.0.136"
+derive_more = "0.99.17"
+serde_json = "1.0.108"
+actix-web-validator = "5.0.1"
+regex = "1.10.2"
+
+[dependencies.mongodb]
+  version = "2.2.0"
+  default-features = false
+  features = ["sync"] 
+
+[dependencies.redis]
+  version = "*"
