@@ -1,7 +1,8 @@
+use actix_web::http::StatusCode;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
-use crate::object::common::CommonError;
+use crate::object::{common::CommonError, error::ApiError};
 
 static TOKEN_SECRET: &str = "annotator_secret";
 
@@ -50,4 +51,14 @@ pub fn get_token_claims(token: String) -> Result<TokenClaims, CommonError> {
     }
 
     Ok(decoded.unwrap().claims)
+}
+
+pub fn get_token_from_auth_string(auth: &str) -> Result<String, ApiError> {
+    let parts: Vec<&str> = auth.split_whitespace().collect();
+
+    if parts.len() == 2 && parts[0] == "Bearer" {
+        Ok(parts[1].to_string())
+    } else {
+        Err(ApiError::new(StatusCode::UNAUTHORIZED).set_msg("invalid token string"))
+    }
 }
