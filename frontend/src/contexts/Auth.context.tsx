@@ -1,5 +1,7 @@
-import { PropsWithChildren, createContext, useEffect, useMemo, useState } from 'react';
-import { User } from '../types/user';
+import { PropsWithChildren, createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { User, UserAuthResponse } from '../types/user';
+import $api from '../utils/api';
+import cookies from 'js-cookie';
 
 export interface AuthData {
   user?: User;
@@ -18,16 +20,40 @@ const AuthContext = createContext<AuthData>({
 export default AuthContext;
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
-  const [user] = useState<User | undefined>(undefined);
+  const [user, setUser] = useState<User | undefined>(undefined);
 
   const isAuthenticated = useMemo(() => user !== undefined, [user]);
 
-  const signIn: AuthData['signIn'] = async () => {};
-  const signOut: AuthData['signOut'] = () => {};
+  const signInWithToken = useCallback(async () => {
+    const token = cookies.get('token');
 
+    if (!token) return;
+
+    const res = await $api.get<User>('/users/me');
+
+    setUser(res.data);
+  }, []);
+
+  const signIn: AuthData['signIn'] = async (login, password) => {
+    const res = await $api.post<UserAuthResponse>('/auth/sign-in', { login, password });
+
+    const token = res.data.token;
+
+    cookies.set('token', token);
+
+    signInWithToken();
+  };
+
+  const signOut: AuthData['signOut'] = () => {
+    cookies.remove('token');
+
+    setUser(undefined);
+  };
+
+  // ? will run on startup only
   useEffect(() => {
-    // TODO: one time effect that checks if the token and authenticate the user
-    // TODO: add auth guard context that will redirect user to sign in page
+    signInWithToken();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

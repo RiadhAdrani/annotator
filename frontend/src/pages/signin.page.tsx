@@ -1,11 +1,11 @@
 import { Button, Input, Paper, Title, Text } from '@mantine/core';
-import { useMemo, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CreateUserBody, UserAuthResponse } from '../types/user';
-import $api from '../utils/api';
+import { SignInBody } from '../types/user';
+import AuthContext from '../contexts/Auth.context';
 
 interface FormField {
-  key: keyof CreateUserBody;
+  key: keyof SignInBody;
   value: string;
   label: string;
   placeholder: string;
@@ -13,38 +13,27 @@ interface FormField {
   type?: string;
 }
 
-const SignUpPage = () => {
-  const [body, setBody] = useState<CreateUserBody>({
-    username: '',
-    email: '',
-    firstname: '',
-    lastname: '',
+const SignInPage = () => {
+  const { signIn } = useContext(AuthContext);
+
+  const [body, setBody] = useState<SignInBody>({
+    login: '',
     password: '',
   });
 
   const form = useMemo<Array<FormField>>(() => {
     return Object.keys(body).map((k) => {
-      const key = k as keyof CreateUserBody;
+      const key = k as keyof SignInBody;
 
       const out: FormField = { key, value: body[key], label: '', placeholder: '', type: 'text' };
 
-      if (key === 'firstname') {
-        out.label = 'First Name';
-        out.placeholder = 'First Name';
-      } else if (key === 'email') {
-        out.label = 'Email';
-        out.placeholder = 'Email';
-        out.type = 'email';
-      } else if (key === 'password') {
+      if (key === 'password') {
         out.label = 'Password';
         out.placeholder = 'Password';
         out.type = 'password';
-      } else if (key === 'lastname') {
-        out.label = 'Last Name';
-        out.placeholder = 'Last Name';
-      } else if (key === 'username') {
-        out.label = 'Username';
-        out.placeholder = 'Username';
+      } else {
+        out.label = 'Email or Username';
+        out.placeholder = 'Email or username';
       }
 
       return out;
@@ -58,9 +47,7 @@ const SignUpPage = () => {
       return;
     }
 
-    $api.post<UserAuthResponse>('/auth/sign-up', body).then((it) => console.log(it.data));
-
-    // TODO: register token and redirect user
+    signIn(body.login, body.password);
   };
 
   return (
@@ -71,7 +58,7 @@ const SignUpPage = () => {
             <Link to={'/'}>
               <Text>Annotator</Text>
             </Link>
-            <Title>Sign up</Title>
+            <Title>Sign in</Title>
           </div>
           <div className="col gap-2">
             {form.map((item) => (
@@ -86,10 +73,10 @@ const SignUpPage = () => {
             ))}
           </div>
           <div className="row-center justify-between">
-            <Link to="/sign-in">
-              <Text size="sm">Already have an account</Text>
+            <Link to="/sign-up">
+              <Text size="sm">No account yet ?</Text>
             </Link>
-            <Button onClick={onSubmit}>Create account</Button>
+            <Button onClick={onSubmit}>Sign in</Button>
           </div>
         </form>
       </Paper>
@@ -97,4 +84,4 @@ const SignUpPage = () => {
   );
 };
 
-export default SignUpPage;
+export default SignInPage;

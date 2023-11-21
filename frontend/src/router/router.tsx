@@ -1,11 +1,14 @@
 import { Outlet, RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../contexts/Auth.context';
-import { MantineProvider, Title, createTheme } from '@mantine/core';
+import { MantineProvider, createTheme } from '@mantine/core';
 
 import '../index.css';
 import '@mantine/core/styles.css';
 import 'uno.css';
 import SignUpPage from '../pages/signup.page';
+import SignInPage from '../pages/signin.page';
+import HomePage from '../pages/home.page';
+import { AuthGuardProvider } from '../contexts/AuthGuard.context';
 
 const theme = createTheme({});
 
@@ -14,29 +17,31 @@ const Router = createBrowserRouter([
     element: (
       <AuthProvider>
         <MantineProvider theme={theme}>
-          {/* // TODO: navbar */}
-          <div className="col min-h-100vh">
-            <nav className="bg-zinc-300 py-1">
-              <Title>Annotator</Title>
-            </nav>
-            <Outlet />
-          </div>
+          <Outlet />
         </MantineProvider>
       </AuthProvider>
     ),
     children: [
-      // TODO: protect with auth
-      {
-        element: <Outlet />,
-      },
-      // available globally
       {
         path: '/',
-        element: <div>Home</div>,
+        element: <HomePage />,
       },
       {
-        path: '/sign-up',
-        element: <SignUpPage />,
+        element: (
+          <AuthGuardProvider block="signed-in">
+            <Outlet />
+          </AuthGuardProvider>
+        ),
+        children: [
+          {
+            path: '/sign-up',
+            element: <SignUpPage />,
+          },
+          {
+            path: '/sign-in',
+            element: <SignInPage />,
+          },
+        ],
       },
     ],
   },

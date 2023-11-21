@@ -12,8 +12,6 @@ use rocket::http::Status;
 pub struct UserController {}
 
 impl UserController {
-    // ? create is handled by auth
-
     pub fn get(id: String) -> Result<User, RequestError> {
         let id_result = ObjectId::parse_str(id);
 
@@ -72,9 +70,11 @@ impl UserController {
         if body.firstname.is_some() {
             update.insert("firstname", body.firstname.unwrap());
         }
+
         if body.lastname.is_some() {
             update.insert("lastname", body.lastname.unwrap());
         }
+
         if body.password.is_some() {
             update.insert("password", body.password.unwrap());
         }
