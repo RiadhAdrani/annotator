@@ -10,7 +10,7 @@ use crate::{
     models::user_model::User,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct UserAuthContext {
     pub user: User,
     pub user_id: ObjectId,
