@@ -47,7 +47,7 @@ impl AuthController {
 
         // create doc struct
         let doc = User {
-            id: None,
+            _id: None,
             email: body.email.to_owned(),
             firstname: body.firstname.to_owned(),
             lastname: body.lastname.to_owned(),
@@ -96,7 +96,7 @@ impl AuthController {
 
         // create token for 7 days
         let exp_date = create_datetime_with_days_offset(7);
-        let sub = user.id.unwrap().to_string();
+        let sub = user._id.unwrap().to_string();
 
         let token = create_token_string(sub, exp_date.timestamp());
 
@@ -170,7 +170,7 @@ impl AuthController {
         // create a token
         // create token for 7 days
         let exp_date = create_datetime_with_days_offset(7);
-        let sub = user.id.unwrap().to_string();
+        let sub = user._id.unwrap().to_string();
 
         let token = create_token_string(sub, exp_date.timestamp());
 

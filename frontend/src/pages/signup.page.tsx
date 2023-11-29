@@ -1,8 +1,9 @@
 import { Button, Input, Paper, Title, Text } from '@mantine/core';
-import { useMemo, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CreateUserBody, UserAuthResponse } from '../types/user';
-import $api from '../utils/api';
+import { CreateUserBody } from '../types/user';
+
+import AppContext from '../contexts/App.context';
 
 interface FormField {
   key: keyof CreateUserBody;
@@ -14,6 +15,8 @@ interface FormField {
 }
 
 const SignUpPage = () => {
+  const { signUp } = useContext(AppContext);
+
   const [body, setBody] = useState<CreateUserBody>({
     username: '',
     email: '',
@@ -58,9 +61,7 @@ const SignUpPage = () => {
       return;
     }
 
-    $api.post<UserAuthResponse>('/auth/sign-up', body).then((it) => console.log(it.data));
-
-    // TODO: register token and redirect user
+    signUp(body);
   };
 
   return (
@@ -87,7 +88,9 @@ const SignUpPage = () => {
           </div>
           <div className="row-center justify-between">
             <Link to="/sign-in">
-              <Text size="sm">Already have an account</Text>
+              <Button variant="light">
+                <Text size="sm">Already have an account</Text>
+              </Button>
             </Link>
             <Button onClick={onSubmit}>Create account</Button>
           </div>

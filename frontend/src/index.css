@@ -7,3 +7,12 @@ body,
   display: flex;
   flex-direction: column;
 }
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+a::visited {
+  color: inherit;
+}

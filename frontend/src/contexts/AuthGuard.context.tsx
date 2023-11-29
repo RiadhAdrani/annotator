@@ -1,12 +1,12 @@
 import { PropsWithChildren, useContext, useEffect, useMemo } from 'react';
-import AuthContext from './Auth.context';
+import AppContext from './App.context';
 import { useNavigate } from 'react-router-dom';
 
 export const AuthGuardProvider = ({
   children,
   block,
 }: PropsWithChildren<{ block: 'signed-out' | 'signed-in' }>) => {
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated } = useContext(AppContext);
 
   const navigate = useNavigate();
 
@@ -25,7 +25,7 @@ export const AuthGuardProvider = ({
   useEffect(() => {
     if (!isBlocked) return;
 
-    navigate(block === 'signed-in' ? '/' : '/sign-up');
+    navigate(block === 'signed-in' ? '/' : '/sign-in');
   }, [isBlocked, navigate, block]);
 
   return <>{children}</>;

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct User {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<ObjectId>,
+    pub _id: Option<ObjectId>,
     pub firstname: String,
     pub lastname: String,
     pub password: String,
@@ -16,7 +16,7 @@ pub struct User {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PublicUser {
-    pub id: String,
+    pub _id: ObjectId,
     pub firstname: String,
     pub lastname: String,
     pub email: String,
@@ -68,13 +68,8 @@ impl Responder for User {
 
 impl From<User> for PublicUser {
     fn from(value: User) -> Self {
-        let id = match value.id {
-            Some(v) => v.to_string(),
-            None => "".to_string(),
-        };
-
         PublicUser {
-            id,
+            _id: value._id.unwrap(),
             firstname: value.firstname,
             lastname: value.lastname,
             email: value.email,

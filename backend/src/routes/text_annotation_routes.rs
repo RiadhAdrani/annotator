@@ -94,6 +94,18 @@ async fn delete_token(
     res
 }
 
+#[get("/{id}")]
+async fn get_annotation(
+    id: web::Path<String>,
+    req: HttpRequest,
+) -> Result<TextAnnotation, ApiError> {
+    let auth = get_auth_ctx(&req);
+
+    let res = AnnotationController::get(id.to_string(), auth);
+
+    res
+}
+
 #[get("/")]
 async fn get_annotations_page(
     query_params: web::Query<PaginationQueryParams>,
@@ -108,18 +120,6 @@ async fn get_annotations_page(
     }
 
     Ok(Json(res.unwrap()))
-}
-
-#[get("/{id}")]
-async fn get_annotation(
-    id: web::Path<String>,
-    req: HttpRequest,
-) -> Result<TextAnnotation, ApiError> {
-    let auth = get_auth_ctx(&req);
-
-    let res = AnnotationController::get(id.to_string(), auth);
-
-    res
 }
 
 #[delete("/{id}")]

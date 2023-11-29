@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TextAnnotation {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<ObjectId>,
+    pub _id: Option<ObjectId>,
     pub content: String,
     pub user_id: ObjectId,
     pub tokens: Vec<Token>,
@@ -16,7 +16,7 @@ pub struct TextAnnotation {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Token {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<ObjectId>,
+    pub _id: Option<ObjectId>,
     pub start: i64,
     pub end: i64,
     /// reference a label in the labels array
@@ -26,7 +26,7 @@ pub struct Token {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Label {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<ObjectId>,
+    pub _id: Option<ObjectId>,
     pub name: String,
     pub color: String,
 }

@@ -2,7 +2,7 @@ import { Button, Input, Paper, Title, Text } from '@mantine/core';
 import { useContext, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SignInBody } from '../types/user';
-import AuthContext from '../contexts/Auth.context';
+import AppContext from '../contexts/App.context';
 
 interface FormField {
   key: keyof SignInBody;
@@ -14,7 +14,7 @@ interface FormField {
 }
 
 const SignInPage = () => {
-  const { signIn } = useContext(AuthContext);
+  const { signIn } = useContext(AppContext);
 
   const [body, setBody] = useState<SignInBody>({
     login: '',
@@ -74,7 +74,9 @@ const SignInPage = () => {
           </div>
           <div className="row-center justify-between">
             <Link to="/sign-up">
-              <Text size="sm">No account yet ?</Text>
+              <Button variant="light">
+                <Text size="sm">No account yet ?</Text>
+              </Button>
             </Link>
             <Button onClick={onSubmit}>Sign in</Button>
           </div>

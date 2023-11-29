@@ -1,10 +1,10 @@
 import { Button, Paper, Text, Title } from '@mantine/core';
 import { useContext } from 'react';
 import { Link } from 'react-router-dom';
-import AuthContext from '../contexts/Auth.context';
+import AppContext from '../contexts/App.context';
 
 const HomePage = () => {
-  const { isAuthenticated, signOut } = useContext(AuthContext);
+  const { isAuthenticated, signOut } = useContext(AppContext);
 
   return (
     <div className="col-center gap-5 flex-1">
@@ -14,8 +14,11 @@ const HomePage = () => {
           <Text>The best annotation tool</Text>
         </div>
         {isAuthenticated ? (
-          <div>
+          <div className="row-center gap-3">
             <Button onClick={signOut}>Sign out</Button>
+            <Link to={'/dashboard'}>
+              <Button>Dashboard</Button>
+            </Link>
           </div>
         ) : (
           <div className="row-center gap-3">

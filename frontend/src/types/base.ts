@@ -1,3 +1,12 @@
+export interface ObjectId {
+  $oid: string;
+}
+
 export interface Base {
-  id: string;
+  _id: ObjectId;
+}
+
+export interface ModalProps {
+  opened: boolean;
+  onClose: () => void;
 }

@@ -13,7 +13,8 @@ use config::cors::create_cors;
 use futures_util::future::FutureExt;
 
 use routes::{
-    auth_routes::auth_routes, text_annotation_routes::annotation_routes, user_routes::user_routes,
+    auth_routes::auth_routes, data_routes::data_routes, text_annotation_routes::annotation_routes,
+    user_routes::user_routes,
 };
 
 use crate::middleware::auth_middleware::use_auth_middleware;
@@ -28,6 +29,7 @@ async fn main() -> std::io::Result<()> {
             .service(user_routes())
             .service(auth_routes())
             .service(annotation_routes())
+            .service(data_routes())
             .wrap_fn(|req, srv| {
                 use_auth_middleware(&req);
 

@@ -40,7 +40,7 @@ impl AnnotationController {
 
         let new_doc = TextAnnotation {
             title: body.title.to_owned(),
-            id: None,
+            _id: None,
             content: body.content.to_owned(),
             user_id,
             labels: vec![],
@@ -225,7 +225,7 @@ impl AnnotationController {
         let mut label = Label {
             name: body.name.clone().to_owned(),
             color: "".to_string(),
-            id: Some(ObjectId::new()),
+            _id: Some(ObjectId::new()),
         };
 
         let mut _color: Option<String> = None;
@@ -279,7 +279,7 @@ impl AnnotationController {
               "labels": {
                 "name": label.name,
                 "color": label.color,
-                "_id": label.id,
+                "_id": label._id,
               }
             }},
             FindOneAndUpdateOptions::builder()
@@ -351,7 +351,7 @@ impl AnnotationController {
         let exists = annotation
             .labels
             .iter()
-            .find(|item| item.id.unwrap() == label_oid.clone().unwrap());
+            .find(|item| item._id.unwrap() == label_oid.clone().unwrap());
 
         if exists.is_none() {
             return Err(ApiError::new(StatusCode::NOT_FOUND).set_msg("label not found"));
@@ -460,7 +460,7 @@ impl AnnotationController {
         let exists = annotation
             .labels
             .iter()
-            .find(|item| item.id.unwrap() == label_oid.clone().unwrap());
+            .find(|item| item._id.unwrap() == label_oid.clone().unwrap());
 
         if exists.is_none() {
             return Err(ApiError::new(StatusCode::NOT_FOUND).set_msg("label not found"));
@@ -540,7 +540,7 @@ impl AnnotationController {
         }
 
         let existing_label = annotation.labels.iter().find(|l| {
-            let o1 = l.to_owned().id.unwrap();
+            let o1 = l.to_owned()._id.unwrap();
 
             return o1 == label_oid.clone().unwrap();
         });
@@ -652,7 +652,7 @@ impl AnnotationController {
         let token = annotation
             .tokens
             .iter()
-            .find(|t| t.id.clone().unwrap() == token_oid.clone().unwrap());
+            .find(|t| t._id.clone().unwrap() == token_oid.clone().unwrap());
 
         if token.is_none() {
             return Err(ApiError::new(StatusCode::NOT_FOUND).set_msg("token not found"));

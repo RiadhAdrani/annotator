@@ -1,5 +1,6 @@
 import axios from 'axios';
 import cookies from 'js-cookie';
+import { toast } from 'sonner';
 
 // const baseURL = process.env.API_URL;
 const baseURL = import.meta.env.API_URL;
@@ -18,5 +19,13 @@ $api.interceptors.request.use((config) => {
 
   return config;
 });
+
+$api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    err;
+    toast.error('Something went wrong...');
+  }
+);
 
 export default $api;

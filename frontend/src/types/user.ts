@@ -7,7 +7,7 @@ export interface User extends Base {
   username: string;
 }
 
-export interface CreateUserBody extends Omit<User, 'id'> {
+export interface CreateUserBody extends Omit<User, '_id'> {
   password: string;
 }
 
