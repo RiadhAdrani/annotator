@@ -23,7 +23,7 @@ const DashboardFeaturedPage = () => {
           </div>
           <div className="grid grid-cols-4 gap-4">
             {textAnnotations.map((it) => (
-              <TextAnnotationCard data={it} />
+              <TextAnnotationCard key={it._id.$oid} data={it} />
             ))}
           </div>
         </div>

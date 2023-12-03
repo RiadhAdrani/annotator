@@ -176,8 +176,15 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     if (!annotation) return;
 
-    const listener: (e: MouseEvent) => void = () => {
-      // should have valid state
+    const escaped = (e: KeyboardEvent) => {
+      const { key } = e;
+
+      if (cursor.inProgress && key === 'Escape') {
+        setCursor({ end: -1, start: -1, inProgress: false });
+      }
+    };
+
+    const mouseUp: (e: MouseEvent) => void = () => {
       setCursor({ end: -1, start: -1, inProgress: false });
 
       if (!cursor.inProgress) {
@@ -193,16 +200,18 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
 
       const body = { start, end, label: selectedLabel };
 
-      console.log(body);
-
       $api
         .post<TextAnnotation>(`/annotations/text/${annotation?._id.$oid}/tokens`, body)
         .then((it) => setAnnotation(it.data));
     };
 
-    window.addEventListener('mouseup', listener);
+    window.addEventListener('keyup', escaped);
+    window.addEventListener('mouseup', mouseUp);
 
-    return () => window.removeEventListener('mouseup', listener);
+    return () => {
+      window.removeEventListener('keyup', escaped);
+      window.removeEventListener('mouseup', mouseUp);
+    };
   }, [cursor, selectedLabel, annotation]);
 
   return (

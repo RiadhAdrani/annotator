@@ -1,4 +1,5 @@
 import axios from 'axios';
+
 import cookies from 'js-cookie';
 import { toast } from 'sonner';
 
@@ -23,8 +24,9 @@ $api.interceptors.request.use((config) => {
 $api.interceptors.response.use(
   (res) => res,
   (err) => {
-    err;
-    toast.error('Something went wrong...');
+    const msg: string | undefined = err.response?.data?.msg;
+
+    toast.error(msg ?? 'Something went wrong...');
   }
 );
 

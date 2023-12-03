@@ -55,15 +55,17 @@ async fn update_label(
     res
 }
 
-#[delete("/{id}/labels/{label_id}")]
+#[delete("/{id}/labels/{label}")]
 async fn delete_label(
     id: web::Path<String>,
-    label_id: web::Path<String>,
+    label: web::Path<String>,
     req: HttpRequest,
 ) -> Result<TextAnnotation, ApiError> {
+    println!("id = {}, label = {}", id, label);
+
     let auth = get_auth_ctx(&req);
 
-    let res = AnnotationController::delete_label(id.clone(), label_id.clone(), auth);
+    let res = AnnotationController::delete_label(id.clone(), label.clone(), auth);
 
     res
 }
@@ -137,9 +139,11 @@ pub fn annotation_routes() -> Scope {
         .service(get_annotation)
         .service(get_annotations_page)
         .service(delete_annotation)
+        // labels
         .service(create_label)
         .service(update_label)
         .service(delete_label)
+        // tokens
         .service(create_token)
         .service(delete_token)
 }

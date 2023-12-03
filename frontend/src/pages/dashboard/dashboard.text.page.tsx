@@ -15,7 +15,7 @@ const Page = () => {
     <>
       <TextAnnotationHeader />
       <TextAnnotationLabels />
-      <div className="col">
+      <div className="col gap-2">
         {!annotation ? (
           <>
             <Skeleton height={75} />

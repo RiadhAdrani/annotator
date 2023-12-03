@@ -1,8 +1,17 @@
 import presetUno from '@unocss/preset-uno';
-import { defineConfig, presetWind } from 'unocss';
+import { defineConfig, presetWind, presetIcons } from 'unocss';
 
 export default defineConfig({
-  presets: [presetUno(), presetWind()],
+  presets: [
+    presetUno(),
+    presetWind(),
+    presetIcons({
+      extraProperties: {
+        display: 'inline-block',
+        'vertical-align': 'middle',
+      },
+    }),
+  ],
   shortcuts: [
     {
       col: 'flex flex-col',

@@ -430,7 +430,14 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-2.0.1.tgz#e5211452df060fa8522b55c7b3c0c4d1981cb044"
   integrity sha512-dvuCeX5fC9dXgJn9t+X5atfmgQAzUOWqS1254Gh0m6i8wKd10ebXkfNKiRK+1GWi/yTvvLDHpoxLr0xxxeslWw==
 
-"@iconify/types@^2.0.0":
+"@iconify-json/mdi@^1.1.57":
+  version "1.1.57"
+  resolved "https://registry.yarnpkg.com/@iconify-json/mdi/-/mdi-1.1.57.tgz#f305572e96e8a41e0164e90c2e3e30d9b6eba6c9"
+  integrity sha512-QRaAnn9QONjkkgv4XsTXCX3J8sjs1Xu/uv/WavBc44wdD6/eBy2v10JvCtRnkNVIiRKzbi1PYxRUe1PRaB1uTg==
+  dependencies:
+    "@iconify/types" "*"
+
+"@iconify/types@*", "@iconify/types@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@iconify/types/-/types-2.0.0.tgz#ab0e9ea681d6c8a1214f30cd741fe3a20cc57f57"
   integrity sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==
@@ -526,6 +533,11 @@
   version "1.12.0"
   resolved "https://registry.yarnpkg.com/@remix-run/router/-/router-1.12.0.tgz#e89b64b6fa97a8a5b740a4c38c2904b80f1f229a"
   integrity sha512-2hXv036Bux90e1GXTWSMfNzfDDK8LA8JYEWfyHxzvwdp6GyoWEovKc9cotb3KCKmkdwsIBuFGX7ScTWyiHv7Eg==
+
+"@riadh-adrani/color-utils@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@riadh-adrani/color-utils/-/color-utils-1.0.2.tgz#980687a8b0cd6551661a2416508740b8d231aac3"
+  integrity sha512-PrwEKq+yGNKNEo4pVWW/DrZMOrK1ez3yt3qG3Kw1RKdVAWvW/5c+ftC2DhTN8Nx8j8K8JQEmtWOs/OR4THPVGg==
 
 "@rollup/pluginutils@^5.0.5":
   version "5.0.5"

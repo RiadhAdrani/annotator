@@ -11,20 +11,20 @@ const TextAnnotationCharacter = ({ item }: TextCharacterProps) => {
   const { colors } = useContext(AppContext);
 
   const color = useMemo(() => {
-    if (!item.label) return 'transparent';
+    if (!item.label) return 'inherit';
 
-    return colors[item.label.color] ?? 'transparent';
+    return colors[item.label.color] ?? 'inherit';
   }, [colors, item]);
 
   return (
     <div
-      className="character row whitespace p-y-5 p-b-5 m-t-2 relative"
+      className="character row p-y-5 p-b-5 m-t-2 relative text-1.2em"
       onMouseDown={() => updateCursor(item.index, 'down')}
       onMouseEnter={() => updateCursor(item.index, 'move')}
     >
-      {item.char}
+      <span className="whitespace-pre selection:bg-[var(--highlight-color)]">{item.char}</span>
       {item.label && (
-        <div style={{ backgroundColor: color }} className="absolute h-10px w-full bottom-0px" />
+        <div style={{ backgroundColor: color }} className="absolute h-15px w-full bottom-0px" />
       )}
     </div>
   );

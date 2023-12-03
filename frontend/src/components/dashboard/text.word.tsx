@@ -7,7 +7,7 @@ export interface TextWordProps {
 
 const TextAnnotationWord = ({ item }: TextWordProps) => {
   return (
-    <div className="word row">
+    <div className="word row whitespace-pre">
       {item.characters.map((word) => (
         <TextAnnotationCharacter item={word} key={`${word.char}@${word.index}`} />
       ))}
