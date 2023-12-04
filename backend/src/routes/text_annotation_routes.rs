@@ -55,17 +55,14 @@ async fn update_label(
     res
 }
 
-#[delete("/{id}/labels/{label}")]
+#[delete("/{id}/labels/{label_id}")]
 async fn delete_label(
-    id: web::Path<String>,
-    label: web::Path<String>,
+    params: web::Path<(String, String)>,
     req: HttpRequest,
 ) -> Result<TextAnnotation, ApiError> {
-    println!("id = {}, label = {}", id, label);
-
     let auth = get_auth_ctx(&req);
 
-    let res = AnnotationController::delete_label(id.clone(), label.clone(), auth);
+    let res = AnnotationController::delete_label(auth, params);
 
     res
 }
