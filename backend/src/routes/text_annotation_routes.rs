@@ -44,13 +44,12 @@ async fn create_label(
 #[put("/{id}/labels/{label_id}")]
 async fn update_label(
     body: web::Json<UpdateLabelBody>,
-    id: web::Path<String>,
-    label_id: web::Path<String>,
+    params: web::Path<(String, String)>,
     req: HttpRequest,
 ) -> Result<TextAnnotation, ApiError> {
     let auth = get_auth_ctx(&req);
 
-    let res = AnnotationController::update_label(id.clone(), label_id.clone(), body, auth);
+    let res = AnnotationController::update_label(body, auth, params);
 
     res
 }

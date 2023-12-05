@@ -24,8 +24,9 @@ export interface TextAnnotationContextData {
   selectedLabel: string | undefined;
 
   createLabel: (body: { name: string; color: string }) => Promise<void>;
-  selectLabel: (id: string) => void;
   deleteLabel: (id: string) => Promise<void>;
+  updateLabel: (id: string, body: { name?: string; color?: string }) => Promise<void>;
+  selectLabel: (id: string) => void;
   updateCursor: (index: number, event: 'down' | 'move') => void;
 }
 
@@ -35,6 +36,7 @@ export const TextAnnotationContext = createContext<TextAnnotationContextData>({
 
   createLabel: async () => undefined,
   deleteLabel: async () => undefined,
+  updateLabel: async () => undefined,
   selectLabel: () => undefined,
   updateCursor: () => undefined,
 });
@@ -109,6 +111,17 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
 
       return $api
         .post<TextAnnotation>(`/annotations/text/${id}/labels`, body)
+        .then((it) => setAnnotation(it.data));
+    },
+    [annotation, id]
+  );
+
+  const updateLabel: TextAnnotationContextData['updateLabel'] = useCallback(
+    async (labelId, body) => {
+      if (!annotation || !id) return;
+
+      return $api
+        .put<TextAnnotation>(`/annotations/text/${id}/labels/${labelId}`, body)
         .then((it) => setAnnotation(it.data));
     },
     [annotation, id]
@@ -223,6 +236,7 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
         selectLabel,
         deleteLabel,
         createLabel,
+        updateLabel,
         selectedLabel,
       }}
     >

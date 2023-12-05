@@ -1,19 +1,24 @@
-import { useContext, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
 import { TextAnnotationContext } from '../../contexts/TextAnnotation.context';
 import AppContext from '../../contexts/App.context';
 import {
   Button,
   Chip,
+  LoadingOverlay,
   Menu,
   MenuDivider,
   MenuDropdown,
   MenuItem,
   MenuTarget,
+  Modal,
   Skeleton,
+  Text,
+  TextInput,
 } from '@mantine/core';
 import { Label } from '../../types/annotations';
 import { generateContrastSafeColor, changeColorOpacity } from '@riadh-adrani/color-utils';
 import CreateLabelModal from './createLabel.modal';
+import LabelColorPicker from './labelColorPicker';
 
 const TextAnnotationLabels = () => {
   const { annotation } = useContext(TextAnnotationContext);
@@ -51,42 +56,127 @@ const LabelChip = ({ label }: LabelChipProps) => {
 
   const { selectedLabel, selectLabel, deleteLabel } = useContext(TextAnnotationContext);
 
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+
   const isSelected = useMemo(() => selectedLabel === label._id.$oid, [label, selectedLabel]);
 
   const color = useMemo(() => colors[label.color], [label, colors]);
 
   return (
-    <Chip
-      checked={isSelected}
-      style={{
-        '--chip-bg': color,
-        '--chip-hover': changeColorOpacity(color, 0.75),
-        '--chip-color': generateContrastSafeColor(color),
-        '--chip-icon': generateContrastSafeColor(color),
-      }}
-      className="group"
-      onClick={() => selectLabel(label._id.$oid)}
-    >
-      <div className="row-center ml-3 gap-2">
-        <span>{label.name}</span>
-        <Menu>
-          <MenuTarget>
-            <Button
-              size="compact-sm"
-              variant="subtle"
-              className="text-inherit opacity-0 group-hover:opacity-100"
-            >
-              <i className="i-mdi-more-vert" />
-            </Button>
-          </MenuTarget>
-          <MenuDropdown>
-            <MenuItem onClick={() => deleteLabel(label._id.$oid)}>Delete</MenuItem>
-            <MenuDivider />
-            <MenuItem onClick={() => selectLabel(label._id.$oid)}>Select</MenuItem>
-          </MenuDropdown>
-        </Menu>
+    <>
+      <Chip
+        checked={isSelected}
+        style={{
+          '--chip-bg': color,
+          '--chip-hover': changeColorOpacity(color, 0.75),
+          '--chip-color': generateContrastSafeColor(color),
+          '--chip-icon': generateContrastSafeColor(color),
+        }}
+        className="group"
+        onClick={() => selectLabel(label._id.$oid)}
+      >
+        <div className="row-center ml-3 gap-2">
+          <span>{label.name}</span>
+          <Menu>
+            <MenuTarget>
+              <Button
+                size="compact-sm"
+                variant="subtle"
+                className="text-inherit opacity-0 group-hover:opacity-100"
+              >
+                <i className="i-mdi-more-vert" />
+              </Button>
+            </MenuTarget>
+            <MenuDropdown>
+              <MenuItem disabled={isSelected} onClick={() => selectLabel(label._id.$oid)}>
+                Select
+              </MenuItem>
+              <MenuDivider />
+              <MenuItem onClick={() => setShowUpdateModal(true)}>Update</MenuItem>
+              <MenuItem onClick={() => deleteLabel(label._id.$oid)}>Delete</MenuItem>
+            </MenuDropdown>
+          </Menu>
+        </div>
+        <Modal opened={showUpdateModal} centered onClose={() => setShowUpdateModal(false)}>
+          <Modal.Body>
+            <UpdateLabelModal label={label} close={() => setShowUpdateModal(false)} />
+          </Modal.Body>
+        </Modal>
+      </Chip>
+    </>
+  );
+};
+
+const UpdateLabelModal = ({ label, close }: { label: Label; close: () => void }) => {
+  const { annotation, updateLabel } = useContext(TextAnnotationContext);
+
+  const [isLoading, setLoading] = useState(false);
+
+  const [name, setName] = useState(label.name);
+  const [color, setColor] = useState(label.color);
+
+  const usedColors = useMemo(() => {
+    if (!annotation) return [];
+
+    return annotation.labels.map((it) => (it._id.$oid === label._id.$oid ? '' : it.color));
+  }, [annotation, label]);
+
+  const canUpdate = useMemo(
+    () => (name !== label.name || color !== label.color) && name.trim(),
+    [name, color, label]
+  );
+
+  const update = useCallback(async () => {
+    if (!canUpdate) return;
+
+    const body: Partial<Pick<Label, 'color' | 'name'>> = {};
+
+    if (name !== label.name) {
+      body.name = name;
+    }
+    if (color !== label.color) {
+      body.color = color;
+    }
+
+    setLoading(true);
+
+    updateLabel(label._id.$oid, body)
+      .then(() => {
+        close();
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [name, color, canUpdate, label, updateLabel, close]);
+
+  return (
+    <>
+      <LoadingOverlay visible={isLoading} />
+      <div className="col gap-8">
+        <div>
+          <Text c={'gray'} size="xs">
+            {label._id.$oid}
+          </Text>
+          <div>Update Label</div>
+        </div>
+        <div className="col gap-3">
+          <TextInput
+            value={name}
+            placeholder="Name"
+            onInput={(e) => setName(e.currentTarget.value)}
+          />
+          <LabelColorPicker filter={usedColors} selected={color} onSelected={(c) => setColor(c)} />
+        </div>
+        <div className="row justify-end gap-3">
+          <Button onClick={close} variant="light">
+            Close
+          </Button>
+          <Button disabled={!canUpdate} onClick={update}>
+            Save
+          </Button>
+        </div>
       </div>
-    </Chip>
+    </>
   );
 };
 
