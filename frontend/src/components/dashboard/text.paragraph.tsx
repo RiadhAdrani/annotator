@@ -25,7 +25,7 @@ const TextAnnotationParagraph = ({ item }: TextAnnotationParagraphProps) => {
   return (
     <>
       <Card shadow="xs">
-        <div>{cursorHint}</div>
+        <div className="text-0.9em">{cursorHint}</div>
       </Card>
       <Card
         shadow={isHighlighting ? 'lg' : 'xs'}

@@ -611,10 +611,11 @@ impl AnnotationController {
     }
 
     pub fn delete_token(
-        annotation_id: String,
-        token_id: String,
+        params: web::Path<(String, String)>,
         auth: Option<UserAuthContext>,
     ) -> Result<TextAnnotation, ApiError> {
+        let (annotation_id, token_id) = params.into_inner();
+
         if auth.is_none() {
             return Err(ApiError::new(StatusCode::UNAUTHORIZED)
                 .set_msg("you need to be signed in to update this annotation"));

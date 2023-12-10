@@ -1,5 +1,5 @@
 import { PropsWithChildren, createContext, useCallback, useEffect, useMemo, useState } from 'react';
-import { TextAnnotation } from '../types/annotations';
+import { TextAnnotation, Token } from '../types/annotations';
 import $api from '../utils/api';
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
@@ -8,6 +8,7 @@ export interface Character {
   char: string;
   index: number;
   label?: { name: string; color: string };
+  token?: Token;
 }
 
 export interface Word {
@@ -33,6 +34,10 @@ export interface TextAnnotationContextData {
   cancelCursor: () => void;
   finishCursor: () => void;
 
+  deleteToken: (id: string) => void;
+
+  toggleCtxMenu: (v?: boolean) => void;
+
   cursor: { inProgress: boolean; start: number; end: number };
 }
 
@@ -50,6 +55,8 @@ export const TextAnnotationContext = createContext<TextAnnotationContextData>({
   finishCursor: () => undefined,
   isHighlighting: false,
   cursor: { end: -1, inProgress: false, start: -1 },
+  toggleCtxMenu: () => 0,
+  deleteToken: () => 0,
 });
 
 export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
@@ -60,6 +67,12 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
   const [, setFailed] = useState(false);
   const [cursor, setCursor] = useState({ start: -1, end: -1, inProgress: false });
   const [selectedLabel, setSelectedLabel] = useState<string | undefined>();
+
+  const [ctxMenuShowed, setCtxMenuShowed] = useState(false);
+
+  const canAnnotate = useMemo(() => {
+    return !ctxMenuShowed;
+  }, [ctxMenuShowed]);
 
   const cursorHint = useMemo(() => {
     if (!annotation) return '';
@@ -109,7 +122,7 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
           }
         }
 
-        word.characters.push({ char, index, label });
+        word.characters.push({ char, index, label, token });
 
         if (char === ' ') {
           // finish current word
@@ -129,6 +142,10 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
       return acc;
     }, [] as Array<Paragraph>);
   }, [annotation]);
+
+  const toggleCtxMenu = useCallback((v?: boolean) => {
+    setCtxMenuShowed((current) => (typeof v === 'boolean' ? v : !current));
+  }, []);
 
   const createLabel = useCallback(
     async (body: { name: string; color: string }) => {
@@ -180,7 +197,7 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
 
   const updateCursor = useCallback(
     (index: number, event: 'down' | 'move') => {
-      if (!annotation || !id || !selectedLabel) return;
+      if (!annotation || !id || !selectedLabel || !canAnnotate) return;
 
       if (event === 'down') {
         setCursor({ end: index, inProgress: true, start: index });
@@ -188,13 +205,13 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
         setCursor((c) => ({ ...c, end: index }));
       }
     },
-    [annotation, id, selectedLabel]
+    [annotation, id, selectedLabel, canAnnotate]
   );
 
   const cancelCursor = useCallback(() => {
     if (!annotation || !cursor.inProgress) return;
 
-    toast.warning('Annotation failed');
+    toast.warning('Annotation canceled');
 
     setCursor({ inProgress: false, end: -1, start: -1 });
   }, [annotation, cursor]);
@@ -221,6 +238,20 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
       .post<TextAnnotation>(`/annotations/text/${annotation?._id.$oid}/tokens`, body)
       .then((it) => setAnnotation(it.data));
   }, [annotation, cursor, selectedLabel]);
+
+  const deleteToken = useCallback(
+    (id: string) => {
+      if (!annotation) return;
+
+      $api
+        .delete<TextAnnotation>(`/annotations/text/${annotation._id.$oid}/tokens/${id}`)
+        .then((it) => {
+          setAnnotation(it.data);
+          toast.info('Token deleted successfully');
+        });
+    },
+    [annotation]
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -249,7 +280,7 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
       const { key } = e;
 
       if (cursor.inProgress && key === 'Escape') {
-        setCursor({ end: -1, start: -1, inProgress: false });
+        cancelCursor();
       }
     };
 
@@ -258,7 +289,7 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
     return () => {
       window.removeEventListener('keyup', escaped);
     };
-  }, [cursor, selectedLabel, annotation]);
+  }, [cursor, selectedLabel, annotation, cancelCursor]);
 
   return (
     <TextAnnotationContext.Provider
@@ -270,12 +301,14 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
         selectLabel,
         deleteLabel,
         createLabel,
-        updateLabel,
         finishCursor,
         isHighlighting,
         cursorHint,
         selectedLabel,
         cancelCursor,
+        updateLabel,
+        deleteToken,
+        toggleCtxMenu,
       }}
     >
       {children}

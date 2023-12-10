@@ -19,6 +19,7 @@ import { Label } from '../../types/annotations';
 import { generateContrastSafeColor, changeColorOpacity } from '@riadh-adrani/color-utils';
 import CreateLabelModal from './createLabel.modal';
 import LabelColorPicker from './labelColorPicker';
+import ConfirmModal from '../modal/confirm.modal';
 
 const TextAnnotationLabels = () => {
   const { annotation } = useContext(TextAnnotationContext);
@@ -36,11 +37,15 @@ const TextAnnotationLabels = () => {
         </>
       ) : (
         <>
-          <Button onClick={() => setOpened(true)}>Create label</Button>
+          <Button onClick={() => setOpened(true)} className="m-r-5">
+            Create label
+          </Button>
           <CreateLabelModal opened={opened} onClose={() => setOpened(false)} />
-          {annotation.labels.map((label) => (
-            <LabelChip key={label._id.$oid} label={label} />
-          ))}
+          {annotation.labels.length === 0 ? (
+            <div className="text-gray">To begin annotating, start by creating a new label</div>
+          ) : (
+            annotation.labels.map((label) => <LabelChip key={label._id.$oid} label={label} />)
+          )}
         </>
       )}
     </div>
@@ -54,13 +59,19 @@ interface LabelChipProps {
 const LabelChip = ({ label }: LabelChipProps) => {
   const { colors } = useContext(AppContext);
 
-  const { selectedLabel, selectLabel, deleteLabel } = useContext(TextAnnotationContext);
+  const { selectedLabel, selectLabel, deleteLabel, annotation } = useContext(TextAnnotationContext);
 
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const isSelected = useMemo(() => selectedLabel === label._id.$oid, [label, selectedLabel]);
 
   const color = useMemo(() => colors[label.color], [label, colors]);
+
+  const useCount = useMemo(
+    () => annotation?.tokens.filter((it) => it.label?.$oid === label._id.$oid).length ?? 0,
+    [annotation?.tokens, label]
+  );
 
   return (
     <>
@@ -72,7 +83,7 @@ const LabelChip = ({ label }: LabelChipProps) => {
           '--chip-color': generateContrastSafeColor(color),
           '--chip-icon': generateContrastSafeColor(color),
         }}
-        className="group"
+        className="group label-chip"
         onClick={() => selectLabel(label._id.$oid)}
       >
         <div className="row-center ml-3 gap-2">
@@ -93,16 +104,26 @@ const LabelChip = ({ label }: LabelChipProps) => {
               </MenuItem>
               <MenuDivider />
               <MenuItem onClick={() => setShowUpdateModal(true)}>Update</MenuItem>
-              <MenuItem onClick={() => deleteLabel(label._id.$oid)}>Delete</MenuItem>
+              <MenuItem onClick={() => setShowDeleteModal(true)}>Delete</MenuItem>
             </MenuDropdown>
           </Menu>
         </div>
-        <Modal opened={showUpdateModal} centered onClose={() => setShowUpdateModal(false)}>
-          <Modal.Body>
-            <UpdateLabelModal label={label} close={() => setShowUpdateModal(false)} />
-          </Modal.Body>
-        </Modal>
       </Chip>
+      <Modal opened={showUpdateModal} centered onClose={() => setShowUpdateModal(false)}>
+        <Modal.Body>
+          <UpdateLabelModal label={label} close={() => setShowUpdateModal(false)} />
+        </Modal.Body>
+      </Modal>
+      <ConfirmModal
+        title="Are you sure you want to delete this label"
+        opened={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onAccept={() => {
+          deleteLabel(label._id.$oid);
+        }}
+      >
+        {useCount > 0 && <span className="text-red">This label is used by some tokens !</span>}
+      </ConfirmModal>
     </>
   );
 };

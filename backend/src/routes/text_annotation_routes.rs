@@ -81,13 +81,12 @@ async fn create_token(
 
 #[delete("/{id}/tokens/{token_id}")]
 async fn delete_token(
-    id: web::Path<String>,
-    token_id: web::Path<String>,
+    params: web::Path<(String, String)>,
     req: HttpRequest,
 ) -> Result<TextAnnotation, ApiError> {
     let auth = get_auth_ctx(&req);
 
-    let res = AnnotationController::delete_token(id.clone(), token_id.clone(), auth);
+    let res = AnnotationController::delete_token(params, auth);
 
     res
 }

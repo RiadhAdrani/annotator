@@ -20,13 +20,11 @@ const LabelColorPicker = ({ filter, onSelected, selected }: LabelColorPickerProp
   return (
     <div className="row flex-wrap gap-2">
       {available.map((color) => (
-        <>
-          <Tooltip label={color.name}>
-            <Button style={{ backgroundColor: color.color }} onClick={() => onSelected(color.name)}>
-              {color.selected && <i className="i-mdi-check-circle" />}
-            </Button>
-          </Tooltip>
-        </>
+        <Tooltip key={color.name} label={color.name}>
+          <Button style={{ backgroundColor: color.color }} onClick={() => onSelected(color.name)}>
+            {color.selected && <i className="i-mdi-check-circle" />}
+          </Button>
+        </Tooltip>
       ))}
     </div>
   );

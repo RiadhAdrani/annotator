@@ -16,3 +16,7 @@ a {
 a::visited {
   color: inherit;
 }
+
+.label-chip .mantine-Chip-label {
+  height: 36px !important;
+}
