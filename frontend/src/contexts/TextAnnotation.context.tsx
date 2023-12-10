@@ -22,23 +22,34 @@ export interface TextAnnotationContextData {
   annotation?: TextAnnotation;
   paragraphs: Array<Paragraph>;
   selectedLabel: string | undefined;
+  cursorHint: string;
+  isHighlighting: boolean;
 
   createLabel: (body: { name: string; color: string }) => Promise<void>;
   deleteLabel: (id: string) => Promise<void>;
   updateLabel: (id: string, body: { name?: string; color?: string }) => Promise<void>;
   selectLabel: (id: string) => void;
   updateCursor: (index: number, event: 'down' | 'move') => void;
+  cancelCursor: () => void;
+  finishCursor: () => void;
+
+  cursor: { inProgress: boolean; start: number; end: number };
 }
 
 export const TextAnnotationContext = createContext<TextAnnotationContextData>({
   paragraphs: [],
   selectedLabel: undefined,
+  cursorHint: '',
 
   createLabel: async () => undefined,
   deleteLabel: async () => undefined,
   updateLabel: async () => undefined,
   selectLabel: () => undefined,
   updateCursor: () => undefined,
+  cancelCursor: () => undefined,
+  finishCursor: () => undefined,
+  isHighlighting: false,
+  cursor: { end: -1, inProgress: false, start: -1 },
 });
 
 export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
@@ -48,8 +59,22 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
 
   const [, setFailed] = useState(false);
   const [cursor, setCursor] = useState({ start: -1, end: -1, inProgress: false });
-
   const [selectedLabel, setSelectedLabel] = useState<string | undefined>();
+
+  const cursorHint = useMemo(() => {
+    if (!annotation) return '';
+
+    if (!cursor.inProgress)
+      return 'To start annotating, click and hold the mouse on a character, and then drag it to highlight the area you want to include';
+
+    return 'Waiting for you to finish highlighting... Press "Escape" to cancel or move the move outside of the text box.';
+  }, [annotation, cursor]);
+
+  const isHighlighting = useMemo(() => {
+    if (!annotation) return false;
+
+    return cursor.inProgress;
+  }, [annotation, cursor]);
 
   const paragraphs = useMemo<Array<Paragraph>>(() => {
     if (!annotation) return [];
@@ -166,6 +191,37 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
     [annotation, id, selectedLabel]
   );
 
+  const cancelCursor = useCallback(() => {
+    if (!annotation || !cursor.inProgress) return;
+
+    toast.warning('Annotation failed');
+
+    setCursor({ inProgress: false, end: -1, start: -1 });
+  }, [annotation, cursor]);
+
+  const finishCursor = useCallback(() => {
+    if (!annotation || !cursor.inProgress) return;
+
+    setCursor({ end: -1, start: -1, inProgress: false });
+
+    if (!cursor.inProgress) {
+      return;
+    }
+
+    if (!selectedLabel) {
+      return toast.error('Please select a label before annotating...');
+    }
+
+    const start = Math.min(cursor.start, cursor.end);
+    const end = Math.max(cursor.start, cursor.end);
+
+    const body = { start, end, label: selectedLabel };
+
+    $api
+      .post<TextAnnotation>(`/annotations/text/${annotation?._id.$oid}/tokens`, body)
+      .then((it) => setAnnotation(it.data));
+  }, [annotation, cursor, selectedLabel]);
+
   useEffect(() => {
     if (!id) return;
 
@@ -179,7 +235,7 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
           if (it.data.labels[0]) {
             setSelectedLabel(it.data.labels[0]._id.$oid);
           }
-        }, 1000);
+        }, 500);
       })
       .catch(() => {
         setFailed(true);
@@ -197,39 +253,17 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
       }
     };
 
-    const mouseUp: (e: MouseEvent) => void = () => {
-      setCursor({ end: -1, start: -1, inProgress: false });
-
-      if (!cursor.inProgress) {
-        return;
-      }
-
-      if (!selectedLabel) {
-        return toast.error('Please select a label before annotating...');
-      }
-
-      const start = Math.min(cursor.start, cursor.end);
-      const end = Math.max(cursor.start, cursor.end);
-
-      const body = { start, end, label: selectedLabel };
-
-      $api
-        .post<TextAnnotation>(`/annotations/text/${annotation?._id.$oid}/tokens`, body)
-        .then((it) => setAnnotation(it.data));
-    };
-
     window.addEventListener('keyup', escaped);
-    window.addEventListener('mouseup', mouseUp);
 
     return () => {
       window.removeEventListener('keyup', escaped);
-      window.removeEventListener('mouseup', mouseUp);
     };
   }, [cursor, selectedLabel, annotation]);
 
   return (
     <TextAnnotationContext.Provider
       value={{
+        cursor,
         paragraphs,
         annotation,
         updateCursor,
@@ -237,7 +271,11 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
         deleteLabel,
         createLabel,
         updateLabel,
+        finishCursor,
+        isHighlighting,
+        cursorHint,
         selectedLabel,
+        cancelCursor,
       }}
     >
       {children}
