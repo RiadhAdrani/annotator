@@ -5,7 +5,7 @@ import {
   TextAnnotationContext,
   TextAnnotationProvider,
 } from '../../contexts/TextAnnotation.context';
-import { Skeleton } from '@mantine/core';
+import { Divider, Skeleton } from '@mantine/core';
 import TextAnnotationParagraph from '../../components/dashboard/text.paragraph';
 
 const Page = () => {
@@ -14,7 +14,9 @@ const Page = () => {
   return (
     <>
       <TextAnnotationHeader />
+      <Divider className="m-y-5" />
       <TextAnnotationLabels />
+      <Divider className="m-y-5" />
       <div className="col gap-2">
         {!annotation ? (
           <>

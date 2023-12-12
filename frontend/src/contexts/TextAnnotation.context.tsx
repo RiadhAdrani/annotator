@@ -34,6 +34,8 @@ export interface TextAnnotationContextData {
   cancelCursor: () => void;
   finishCursor: () => void;
 
+  updateAnnotation: (body: { title: string }) => Promise<void>;
+
   deleteToken: (id: string) => void;
 
   toggleCtxMenu: (v?: boolean) => void;
@@ -53,6 +55,7 @@ export const TextAnnotationContext = createContext<TextAnnotationContextData>({
   updateCursor: () => undefined,
   cancelCursor: () => undefined,
   finishCursor: () => undefined,
+  updateAnnotation: async () => undefined,
   isHighlighting: false,
   cursor: { end: -1, inProgress: false, start: -1 },
   toggleCtxMenu: () => 0,
@@ -253,6 +256,18 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
     [annotation]
   );
 
+  const updateAnnotation: TextAnnotationContextData['updateAnnotation'] = useCallback(
+    async (body) => {
+      if (!annotation) return;
+
+      $api.put<TextAnnotation>(`/annotations/text/${annotation._id.$oid}`, body).then((it) => {
+        setAnnotation(it.data);
+        toast.info('Annotation updated successfully');
+      });
+    },
+    [annotation]
+  );
+
   useEffect(() => {
     if (!id) return;
 
@@ -307,6 +322,7 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
         selectedLabel,
         cancelCursor,
         updateLabel,
+        updateAnnotation,
         deleteToken,
         toggleCtxMenu,
       }}

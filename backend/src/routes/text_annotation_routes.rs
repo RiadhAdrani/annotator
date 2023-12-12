@@ -8,7 +8,8 @@ use crate::{
     controllers::text_annotation_controller::AnnotationController,
     helpers::request_helpers::get_auth_ctx,
     models::text_annotation_model::{
-        CreateLabelBody, CreateTextAnnotationBody, CreateTokenBody, TextAnnotation, UpdateLabelBody,
+        CreateLabelBody, CreateTextAnnotationBody, CreateTokenBody, TextAnnotation,
+        UpdateLabelBody, UpdateTextAnnotationBody,
     },
     object::{
         common::{Message, PaginationQueryParams},
@@ -24,6 +25,19 @@ async fn create_annotation(
     let auth = get_auth_ctx(&req);
 
     let res = AnnotationController::create(body, auth);
+
+    res
+}
+
+#[put("/{id}")]
+async fn update_annotation(
+    body: web::Json<UpdateTextAnnotationBody>,
+    id: web::Path<String>,
+    req: HttpRequest,
+) -> Result<TextAnnotation, ApiError> {
+    let auth = get_auth_ctx(&req);
+
+    let res = AnnotationController::update(id.clone(), auth, body);
 
     res
 }
@@ -131,6 +145,7 @@ async fn delete_annotation(id: web::Path<String>, req: HttpRequest) -> Result<Me
 pub fn annotation_routes() -> Scope {
     web::scope("/annotations/text")
         .service(create_annotation)
+        .service(update_annotation)
         .service(get_annotation)
         .service(get_annotations_page)
         .service(delete_annotation)

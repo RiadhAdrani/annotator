@@ -38,6 +38,11 @@ pub struct CreateTextAnnotationBody {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateTextAnnotationBody {
+    pub title: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateLabelBody {
     pub name: String,
     pub color: Option<String>,

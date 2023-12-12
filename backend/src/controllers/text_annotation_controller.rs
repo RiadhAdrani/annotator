@@ -16,7 +16,7 @@ use crate::{
     middleware::auth_middleware::UserAuthContext,
     models::text_annotation_model::{
         CreateLabelBody, CreateTextAnnotationBody, CreateTokenBody, Label, TextAnnotation,
-        UpdateLabelBody,
+        UpdateLabelBody, UpdateTextAnnotationBody,
     },
     object::{
         common::{Message, PaginationQueryParams},
@@ -75,6 +75,62 @@ impl AnnotationController {
         }
 
         Ok(annotation.unwrap().unwrap())
+    }
+
+    pub fn update(
+        id: String,
+        auth: Option<UserAuthContext>,
+        body: Json<UpdateTextAnnotationBody>,
+    ) -> Result<TextAnnotation, ApiError> {
+        if auth.is_none() {
+            return Err(ApiError::new(StatusCode::UNAUTHORIZED)
+                .set_msg("you need to be signed in to update an annotation"));
+        }
+
+        let doc_id = ObjectId::from_str(id.as_str());
+
+        if doc_id.is_err() {
+            return Err(ApiError::new(StatusCode::UNPROCESSABLE_ENTITY)
+                .set_msg("unable to convert id to object id"));
+        }
+
+        // find annotation
+        let annotation_result = DB
+            .text_annotation_collection
+            .find_one(doc! {"_id": doc_id.as_ref().unwrap()}, None);
+
+        if annotation_result.as_ref().is_err() || annotation_result.as_ref().unwrap().is_none() {
+            return Err(ApiError::new(StatusCode::NOT_FOUND).set_msg("annotation was not found"));
+        }
+
+        // create label
+        let creation_result = DB.text_annotation_collection.find_one_and_update(
+            doc! {"_id": doc_id.as_ref().unwrap()},
+            doc! {"$set": {
+              "title": body.title.to_owned()
+            }},
+            FindOneAndUpdateOptions::builder()
+                .return_document(ReturnDocument::After)
+                .build(),
+        );
+
+        if creation_result.as_ref().is_err() {
+            let err = creation_result.as_ref().clone().err().unwrap().to_string();
+
+            return Err(ApiError::new(StatusCode::INTERNAL_SERVER_ERROR)
+                .set_msg("unable to create label")
+                .set_msg(err.as_str()));
+        }
+
+        if creation_result.as_ref().unwrap().is_none() {
+            return Err(
+                ApiError::new(StatusCode::INTERNAL_SERVER_ERROR).set_msg("unable to create label")
+            );
+        }
+
+        let updated_annotation = creation_result.unwrap().unwrap();
+
+        Ok(updated_annotation)
     }
 
     pub fn get(id: String, auth: Option<UserAuthContext>) -> Result<TextAnnotation, ApiError> {
