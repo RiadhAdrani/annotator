@@ -1,4 +1,4 @@
-import { AppShell, Avatar, Burger, Button, Menu, Text } from '@mantine/core';
+import { AppShell, Avatar, Burger, Button, Card, Menu, Text } from '@mantine/core';
 import { useContext, useEffect } from 'react';
 import { DashboardContext } from '../../contexts/Dashboard.context';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -8,7 +8,7 @@ const DashboardPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { isNavBarOpened, toggleNavBarOpened } = useContext(DashboardContext);
+  const { isNavBarOpened, toggleNavBarOpened, textAnnotations } = useContext(DashboardContext);
   const { user, signOut } = useContext(AppContext);
 
   useEffect(() => {
@@ -50,7 +50,23 @@ const DashboardPage = () => {
           </Menu>
         </div>
       </AppShell.Header>
-      <AppShell.Navbar p="md"></AppShell.Navbar>
+      <AppShell.Navbar p="md">
+        <div className="col gap-5">
+          <Text size="lg">Text Annotations</Text>
+          <div className="col gap-2">
+            {textAnnotations.map((it) => (
+              <Link to={`/dashboard/text/${it._id.$oid}`}>
+                <Card shadow="xs" p={10}>
+                  <Text size="xs" c="gray">
+                    {it._id.$oid}
+                  </Text>
+                  <Text size="sm">{it.title}</Text>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </AppShell.Navbar>
       <AppShell.Main className="col">
         <div className="col p-5">
           <Outlet />

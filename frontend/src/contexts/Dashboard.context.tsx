@@ -15,6 +15,7 @@ export interface DashboardData {
   toggleNavBarOpened: (v?: boolean) => void;
   textAnnotations: Array<TextAnnotation>;
   createTextAnnotation: (body: CreateTextAnnotationBody) => Promise<void>;
+  deleteTextAnnotation: (id: string) => Promise<void>;
 }
 
 export const DashboardContext = createContext<DashboardData>({
@@ -22,6 +23,7 @@ export const DashboardContext = createContext<DashboardData>({
   textAnnotations: [],
   toggleNavBarOpened: () => 0,
   createTextAnnotation: async () => undefined,
+  deleteTextAnnotation: async () => undefined,
 });
 
 export const DashboardProvider = ({ children }: PropsWithChildren) => {
@@ -44,6 +46,12 @@ export const DashboardProvider = ({ children }: PropsWithChildren) => {
     setTextAnnotations((v) => [...v, res.data]);
   }, []);
 
+  const deleteTextAnnotation = useCallback(async (id: string) => {
+    await $api.delete(`/annotations/text/${id}`);
+
+    setTextAnnotations((v) => v.filter((it) => it._id.$oid !== id));
+  }, []);
+
   const fetchTextAnnotations = useCallback(async (page = 1, count = 10) => {
     const res = await $api.get<Array<TextAnnotation>>(
       `/annotations/text/?page=${page}&count=${count}`
@@ -62,7 +70,13 @@ export const DashboardProvider = ({ children }: PropsWithChildren) => {
 
   return (
     <DashboardContext.Provider
-      value={{ isNavBarOpened, toggleNavBarOpened, textAnnotations, createTextAnnotation }}
+      value={{
+        isNavBarOpened,
+        toggleNavBarOpened,
+        textAnnotations,
+        createTextAnnotation,
+        deleteTextAnnotation,
+      }}
     >
       {children}
     </DashboardContext.Provider>

@@ -271,6 +271,8 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     if (!id) return;
 
+    setAnnotation(undefined);
+
     $api
       .get<TextAnnotation>(`/annotations/text/${id}`)
       .then((it) => {
@@ -281,7 +283,7 @@ export const TextAnnotationProvider = ({ children }: PropsWithChildren) => {
           if (it.data.labels[0]) {
             setSelectedLabel(it.data.labels[0]._id.$oid);
           }
-        }, 500);
+        }, 200);
       })
       .catch(() => {
         setFailed(true);
