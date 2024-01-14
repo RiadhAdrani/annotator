@@ -10,7 +10,7 @@ export interface TextAnnotationParagraphProps {
 }
 
 const TextAnnotationParagraph = ({ item }: TextAnnotationParagraphProps) => {
-  const { annotation, selectedLabel, cursorHint, isHighlighting, cancelCursor, finishCursor } =
+  const { annotation, selectedLabel, isHighlighting, cancelCursor, finishCursor } =
     useContext(TextAnnotationContext);
   const { colors } = useContext(AppContext);
 
@@ -24,9 +24,6 @@ const TextAnnotationParagraph = ({ item }: TextAnnotationParagraphProps) => {
 
   return (
     <>
-      <Card shadow="xs">
-        <div className="text-0.9em">{cursorHint}</div>
-      </Card>
       <Card
         shadow={isHighlighting ? 'lg' : 'xs'}
         bg={isHighlighting ? changeColorOpacity(highlightColor, 0.05) : ''}

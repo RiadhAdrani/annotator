@@ -8,8 +8,10 @@ mod object;
 mod routes;
 mod validators;
 
+use actix_multipart::form::tempfile::TempFileConfig;
 use actix_web::{dev::Service, middleware::Logger, App, HttpServer};
 use config::cors::create_cors;
+use database::files::upload_files;
 use futures_util::future::FutureExt;
 
 use routes::{
@@ -24,12 +26,18 @@ extern crate lazy_static;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+
+    std::fs::create_dir_all("./tmp")?;
+
+    HttpServer::new(move || {
         App::new()
             .service(user_routes())
             .service(auth_routes())
             .service(annotation_routes())
             .service(data_routes())
+            .app_data(TempFileConfig::default().directory("./tmp"))
+            .service(upload_files)
             .wrap_fn(|req, srv| {
                 use_auth_middleware(&req);
 
@@ -39,6 +47,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(create_cors())
     })
     .bind(("127.0.0.1", 8000))?
+    .workers(2)
     .run()
     .await
 }

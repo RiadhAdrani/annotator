@@ -1,15 +1,15 @@
-import { useContext } from 'react';
+import { Fragment, useContext } from 'react';
 import TextAnnotationHeader from '../../components/dashboard/text.header';
 import TextAnnotationLabels from '../../components/dashboard/text.labels';
 import {
   TextAnnotationContext,
   TextAnnotationProvider,
 } from '../../contexts/TextAnnotation.context';
-import { Divider, Skeleton } from '@mantine/core';
+import { Card, Divider, Skeleton } from '@mantine/core';
 import TextAnnotationParagraph from '../../components/dashboard/text.paragraph';
 
 const Page = () => {
-  const { annotation, paragraphs } = useContext(TextAnnotationContext);
+  const { annotation, paragraphs, cursorHint } = useContext(TextAnnotationContext);
 
   return (
     <>
@@ -28,8 +28,13 @@ const Page = () => {
           </>
         ) : (
           <>
+            <Card shadow="xs">
+              <div className="text-0.9em">{cursorHint}</div>
+            </Card>
             {paragraphs.map((p, key) => (
-              <TextAnnotationParagraph key={key} item={p} />
+              <Fragment key={key}>
+                {p.words.length > 0 && <TextAnnotationParagraph item={p} />}
+              </Fragment>
             ))}
           </>
         )}
